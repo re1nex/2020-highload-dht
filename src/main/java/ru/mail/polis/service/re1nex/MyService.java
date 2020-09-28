@@ -1,6 +1,14 @@
 package ru.mail.polis.service.re1nex;
 
-import one.nio.http.*;
+
+import one.nio.http.HttpServer;
+import one.nio.http.HttpServerConfig;
+import one.nio.http.HttpSession;
+import one.nio.http.Param;
+import one.nio.http.Path;
+import one.nio.http.RequestMethod;
+import one.nio.http.Response;
+import one.nio.http.Request;
 import one.nio.server.AcceptorConfig;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -32,6 +40,9 @@ public class MyService extends HttpServer implements Service {
         return httpServerConfig;
     }
 
+    /**
+     * @return 200 OK
+     */
     @Path("/v0/status")
     public Response status() {
         return Response.ok(Response.OK);
@@ -44,6 +55,12 @@ public class MyService extends HttpServer implements Service {
         session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
     }
 
+    /**
+     * Provide request to get the value by id.
+     *
+     * @param id - key
+     * @return 200 OK ||  400 / 404 / 500 ERROR
+     */
     @Path("/v0/entity")
     @RequestMethod(Request.METHOD_GET)
     public Response get(@Param(value = "id", required = true) final String id) {
@@ -59,7 +76,7 @@ public class MyService extends HttpServer implements Service {
             logger.error("GET failed! Cannot find the element {}.\n Cause: {} ", id, e.getCause(), e);
             return new Response(Response.NOT_FOUND, Response.EMPTY);
         } catch (IOException e) {
-            logger.error("GET failed! Cannot get the element {}.\n Error: {}. Cause: {} ", id, e.getMessage(), e.getCause(), e);
+            logger.error("GET failed! Cannot get the element {}.\n Error: {}.", id, e.getMessage(), e);
             return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
         }
         if (result.hasRemaining()) {
@@ -71,6 +88,13 @@ public class MyService extends HttpServer implements Service {
         }
     }
 
+    /**
+     * Provide request to put the value by id
+     *
+     * @param id      - key
+     * @param request - Request with value
+     * @return 201 Created || 400 / 500 ERROR
+     */
     @Path("/v0/entity")
     @RequestMethod(Request.METHOD_PUT)
     public Response put(@Param(value = "id", required = true) final String id, @NotNull final Request request) {
@@ -82,12 +106,19 @@ public class MyService extends HttpServer implements Service {
         try {
             dao.upsert(ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8)), ByteBuffer.wrap(request.getBody()));
         } catch (IOException e) {
-            logger.debug("PUT failed! Cannot put the element: {}. Request: {}. Cause: {}", id, request.getBody(), e.getCause());
+            logger.debug("PUT failed! Cannot put the element: {}. Request: {}. Cause: {}",
+                    id, request.getBody(), e.getCause());
             return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
         }
         return new Response(Response.CREATED, Response.EMPTY);
     }
 
+    /**
+     * Provide request to delete the value by id.
+     *
+     * @param id - key
+     * @return 202 Accepted ||  400 / 500 ERROR
+     */
     @Path("/v0/entity")
     @RequestMethod(Request.METHOD_DELETE)
     public Response delete(@Param(value = "id", required = true) final String id) {
@@ -99,7 +130,7 @@ public class MyService extends HttpServer implements Service {
         try {
             dao.remove(ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8)));
         } catch (IOException e) {
-            logger.error("GET failed! Cannot get the element {}.\n Error: {}. Cause: {} ", id, e.getMessage(), e.getCause(), e);
+            logger.error("DELETE failed! Cannot get the element {}.\n Error: {}", id, e.getMessage(), e);
             return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
         }
         return new Response(Response.ACCEPTED, Response.EMPTY);
