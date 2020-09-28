@@ -1,14 +1,13 @@
 package ru.mail.polis.service.re1nex;
 
-
 import one.nio.http.HttpServer;
 import one.nio.http.HttpServerConfig;
 import one.nio.http.HttpSession;
 import one.nio.http.Param;
 import one.nio.http.Path;
 import one.nio.http.RequestMethod;
-import one.nio.http.Response;
 import one.nio.http.Request;
+import one.nio.http.Response;
 import one.nio.server.AcceptorConfig;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -39,10 +38,7 @@ public class MyService extends HttpServer implements Service {
         httpServerConfig.acceptors = new AcceptorConfig[]{acceptorConfig};
         return httpServerConfig;
     }
-
-    /**
-     * @return 200 OK
-     */
+    
     @Path("/v0/status")
     public Response status() {
         return Response.ok(Response.OK);
@@ -55,8 +51,7 @@ public class MyService extends HttpServer implements Service {
         session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
     }
 
-    /**
-     * Provide request to get the value by id.
+    /** Provide request to get the value by id.
      *
      * @param id - key
      * @return 200 OK ||  400 / 404 / 500 ERROR
@@ -88,8 +83,7 @@ public class MyService extends HttpServer implements Service {
         }
     }
 
-    /**
-     * Provide request to put the value by id
+    /** Provide request to put the value by id
      *
      * @param id      - key
      * @param request - Request with value
@@ -113,8 +107,7 @@ public class MyService extends HttpServer implements Service {
         return new Response(Response.CREATED, Response.EMPTY);
     }
 
-    /**
-     * Provide request to delete the value by id.
+    /** Provide request to delete the value by id.
      *
      * @param id - key
      * @return 202 Accepted ||  400 / 500 ERROR
