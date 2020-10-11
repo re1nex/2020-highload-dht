@@ -10,6 +10,7 @@ import one.nio.http.Request;
 import one.nio.http.RequestMethod;
 import one.nio.http.Response;
 import one.nio.server.AcceptorConfig;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,17 @@ public class AsyncService extends HttpServer implements Service {
     private final ExecutorService executor;
     @NotNull
     private static final Logger logger = LoggerFactory.getLogger(AsyncService.class);
+    @NonNull
+    private static final String RESPONSE_ERROR = "Can't send response error";
 
+    /**
+     * Service for concurrent work with requests
+     *
+     * @param port - Server port
+     * @param dao - DAO impl
+     * @param workersCount - number workers in pool
+     * @param queueSize - size of task's queue
+     */
     public AsyncService(final int port,
                         @NotNull final DAO dao,
                         final int workersCount,
@@ -60,13 +71,18 @@ public class AsyncService extends HttpServer implements Service {
         return httpServerConfig;
     }
 
+    /**
+     * Provide service status
+     *
+     * @param session - current HttpSession
+     */
     @Path("/v0/status")
     public void status(final HttpSession session) {
         executor.execute(() -> {
             try {
                 session.sendResponse(Response.ok("OK"));
             } catch (IOException e) {
-                logger.error("Can't send response error", e);
+                logger.error(RESPONSE_ERROR , e);
             }
         });
     }
@@ -79,7 +95,7 @@ public class AsyncService extends HttpServer implements Service {
             try {
                 session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
             } catch (IOException e) {
-                logger.error("Can't send response error", e);
+                logger.error(RESPONSE_ERROR , e);
             }
         });
     }
@@ -113,7 +129,7 @@ public class AsyncService extends HttpServer implements Service {
                 try {
                     session.sendResponse(new Response(Response.INTERNAL_ERROR, Response.EMPTY));
                 } catch (IOException ioException) {
-                    logger.error("Can't send response error", ioException);
+                    logger.error(RESPONSE_ERROR , ioException);
                 }
             }
         });
@@ -129,7 +145,9 @@ public class AsyncService extends HttpServer implements Service {
      */
     @Path("/v0/entity")
     @RequestMethod(Request.METHOD_PUT)
-    public void put(@Param(value = "id", required = true) final String id, @NotNull final Request request, final HttpSession session) {
+    public void put(@Param(value = "id", required = true) final String id,
+                    @NotNull final Request request,
+                    final HttpSession session) {
         executor.execute(() -> {
             try {
                 if (id.isEmpty()) {
@@ -144,7 +162,7 @@ public class AsyncService extends HttpServer implements Service {
                 try {
                     session.sendResponse(new Response(Response.INTERNAL_ERROR, Response.EMPTY));
                 } catch (IOException ioException) {
-                    logger.error("Can't send response error", ioException);
+                    logger.error(RESPONSE_ERROR , ioException);
                 }
             }
         });
@@ -174,7 +192,7 @@ public class AsyncService extends HttpServer implements Service {
                 try {
                     session.sendResponse(new Response(Response.INTERNAL_ERROR, Response.EMPTY));
                 } catch (IOException ioException) {
-                    logger.error("Can't send response error", ioException);
+                    logger.error(RESPONSE_ERROR , ioException);
                 }
             }
         });

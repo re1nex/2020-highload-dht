@@ -26,6 +26,12 @@ public class MyService extends HttpServer implements Service {
     @NotNull
     private static final Logger logger = LoggerFactory.getLogger(MyService.class);
 
+    /**
+     * Service for work with requests
+     *
+     * @param port - Server port
+     * @param dao - DAO impl
+     */
     public MyService(final int port, @NotNull final DAO dao) throws IOException {
         super(provideConfig(port));
         this.dao = dao;
@@ -39,6 +45,11 @@ public class MyService extends HttpServer implements Service {
         return httpServerConfig;
     }
 
+    /**
+     * Provide service status
+     *
+     * @return Response - status
+     */
     @Path("/v0/status")
     public Response status() {
         return Response.ok(Response.OK);

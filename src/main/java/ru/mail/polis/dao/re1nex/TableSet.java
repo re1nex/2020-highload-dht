@@ -17,6 +17,9 @@ public class TableSet {
     public int version;
     private static final Logger logger = LoggerFactory.getLogger(NewDAO.class);
 
+    /**
+     * Contains all necessary information for dao work
+     */
     public TableSet(@NotNull final MemTable memTable,
                     @NotNull final Set<Table> flushing,
                     @NotNull final NavigableMap<Integer, Table> ssTables,
@@ -28,6 +31,10 @@ public class TableSet {
         this.version = version;
     }
 
+    /**
+     * Contains all necessary information for dao work
+     * need for first initialization
+     */
     public TableSet(@NotNull final NavigableMap<Integer, Table> ssTables,
                     final int version) {
         assert version >= 0;

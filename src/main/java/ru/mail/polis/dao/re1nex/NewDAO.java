@@ -79,7 +79,9 @@ public class NewDAO implements DAO {
         try {
             final Iterator<Cell> alive = Iterators.filter(cellIterator(from),
                     cell -> !requireNonNull(cell).getValue().isTombstone());
-            return Iterators.transform(alive, cell -> Record.of(requireNonNull(cell).getKey(), cell.getValue().getData()));
+            return Iterators.transform(alive,
+                    cell -> Record.of(requireNonNull(cell).getKey(),
+                            cell.getValue().getData()));
         } finally {
             lock.readLock().unlock();
         }
@@ -168,8 +170,9 @@ public class NewDAO implements DAO {
             flush();
         }
         for (int i = 0; i < tables.ssTables.size(); i++) {
-            if (tables != null && tables.ssTables != null && tables.ssTables.get(i) != null)
+            if (tables.ssTables.get(i) != null) {
                 tables.ssTables.get(i).close();
+            }
         }
 
     }
