@@ -38,10 +38,10 @@ public class AsyncService extends HttpServer implements Service {
     /**
      * Service for concurrent work with requests
      *
-     * @param port - Server port
-     * @param dao - DAO impl
+     * @param port         - Server port
+     * @param dao          - DAO impl
      * @param workersCount - number workers in pool
-     * @param queueSize - size of task's queue
+     * @param queueSize    - size of task's queue
      */
     public AsyncService(final int port,
                         @NotNull final DAO dao,
@@ -82,7 +82,7 @@ public class AsyncService extends HttpServer implements Service {
             try {
                 session.sendResponse(Response.ok("OK"));
             } catch (IOException e) {
-                logger.error(RESPONSE_ERROR , e);
+                logger.error(RESPONSE_ERROR, e);
             }
         });
     }
@@ -95,7 +95,7 @@ public class AsyncService extends HttpServer implements Service {
             try {
                 session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
             } catch (IOException e) {
-                logger.error(RESPONSE_ERROR , e);
+                logger.error(RESPONSE_ERROR, e);
             }
         });
     }
@@ -104,7 +104,7 @@ public class AsyncService extends HttpServer implements Service {
      * Provide request to get the value by id.
      * send 200 OK ||  400 / 404 / 500 ERROR
      *
-     * @param id - key
+     * @param id      - key
      * @param session - current HttpSession
      */
     @Path("/v0/entity")
@@ -129,7 +129,7 @@ public class AsyncService extends HttpServer implements Service {
                 try {
                     session.sendResponse(new Response(Response.INTERNAL_ERROR, Response.EMPTY));
                 } catch (IOException ioException) {
-                    logger.error(RESPONSE_ERROR , ioException);
+                    logger.error(RESPONSE_ERROR, ioException);
                 }
             }
         });
@@ -162,7 +162,7 @@ public class AsyncService extends HttpServer implements Service {
                 try {
                     session.sendResponse(new Response(Response.INTERNAL_ERROR, Response.EMPTY));
                 } catch (IOException ioException) {
-                    logger.error(RESPONSE_ERROR , ioException);
+                    logger.error(RESPONSE_ERROR, ioException);
                 }
             }
         });
@@ -173,7 +173,7 @@ public class AsyncService extends HttpServer implements Service {
      * Provide request to delete the value by id.
      * send 202 Accepted ||  400 / 500 ERROR
      *
-     * @param id - key
+     * @param id      - key
      * @param session - current HttpSession
      */
     @Path("/v0/entity")
@@ -192,7 +192,7 @@ public class AsyncService extends HttpServer implements Service {
                 try {
                     session.sendResponse(new Response(Response.INTERNAL_ERROR, Response.EMPTY));
                 } catch (IOException ioException) {
-                    logger.error(RESPONSE_ERROR , ioException);
+                    logger.error(RESPONSE_ERROR, ioException);
                 }
             }
         });
