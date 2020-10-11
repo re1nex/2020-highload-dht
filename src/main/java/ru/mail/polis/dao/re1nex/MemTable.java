@@ -6,15 +6,16 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 final class MemTable implements Table {
 
-    private final SortedMap<ByteBuffer, Value> map = new TreeMap<>();
-    private long sizeInBytes;
+    private final SortedMap<ByteBuffer, Value> map = new ConcurrentSkipListMap<>();
+    private final AtomicLong size = new AtomicLong();
 
     MemTable() {
-        sizeInBytes = 720L;
+        size.set(720L);
     }
 
     @NotNull
@@ -30,9 +31,9 @@ final class MemTable implements Table {
     @Override
     public void upsert(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value) throws IOException {
         if (map.containsKey(key)) {
-            sizeInBytes += value.remaining() + Long.BYTES;
+            size.set(size.get() + value.remaining() + Long.BYTES);
         } else {
-            sizeInBytes += value.remaining() + key.remaining() + Long.BYTES;
+            size.set(size.get() + value.remaining() + key.remaining() + Long.BYTES);
         }
         map.put(key.duplicate(), new Value(System.currentTimeMillis(), value.duplicate()));
     }
@@ -41,9 +42,9 @@ final class MemTable implements Table {
     public void remove(@NotNull final ByteBuffer key) throws IOException {
         final Value previous = map.put(key.duplicate(), new Value(System.currentTimeMillis()));
         if (previous == null) {
-            sizeInBytes += key.remaining();
+            size.set(size.get() + key.remaining());
         } else if (!previous.isTombstone()) {
-            sizeInBytes -= previous.getData().remaining();
+            size.set(size.get() - previous.getData().remaining());
         }
     }
 
@@ -57,6 +58,6 @@ final class MemTable implements Table {
     }
 
     long sizeInBytes() {
-        return sizeInBytes;
+        return size.get();
     }
 }
