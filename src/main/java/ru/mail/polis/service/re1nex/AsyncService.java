@@ -36,7 +36,7 @@ public class AsyncService extends HttpServer implements Service {
     private static final String RESPONSE_ERROR = "Can't send response error";
 
     /**
-     * Service for concurrent work with requests
+     * Service for concurrent work with requests.
      *
      * @param port         - Server port
      * @param dao          - DAO impl
@@ -72,7 +72,7 @@ public class AsyncService extends HttpServer implements Service {
     }
 
     /**
-     * Provide service status
+     * Provide service status.
      *
      * @param session - current HttpSession
      */

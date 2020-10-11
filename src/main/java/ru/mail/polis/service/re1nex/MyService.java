@@ -27,7 +27,7 @@ public class MyService extends HttpServer implements Service {
     private static final Logger logger = LoggerFactory.getLogger(MyService.class);
 
     /**
-     * Service for work with requests
+     * Service for work with requests.
      *
      * @param port - Server port
      * @param dao - DAO impl
@@ -46,7 +46,7 @@ public class MyService extends HttpServer implements Service {
     }
 
     /**
-     * Provide service status
+     * Provide service status.
      *
      * @return Response - status
      */
