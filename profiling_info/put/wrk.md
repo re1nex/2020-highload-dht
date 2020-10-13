@@ -29,10 +29,15 @@ Transfer/sec:    130.86KB
 
 ![alt text](https://github.com/re1nex/2020-highload-dht/blob/hw1/profiling_info/put/cpu.png)
 
-46% занял put , половину шло на логгирование , половину на сам процесс вставки в dao
+46% занял put
+8 % - отправка ответа
+20 % - JIT
+остальное ушло на парсинг и чтение запроса
 
 # alloc
 
  ![alt text](https://github.com/re1nex/2020-highload-dht/blob/hw1/profiling_info/put/alloc.png)
-
-51% занял put ,  большая часть ушла на логгирование , сам процесс вставки в dao только 4 % 
+51 % - put
+17 % - на треды
+4 % отправка ответа
+остальное ушло на парсинг и чтение запроса 

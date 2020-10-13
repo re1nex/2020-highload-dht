@@ -21,14 +21,19 @@
 Requests/sec:   1999.99
 Transfer/sec:    132.81KB
 
+Сильных отклонений не заметил 
 
 # cpu
 
 ![alt text](https://github.com/re1nex/2020-highload-dht/blob/hw1/profiling_info/del/cpu.png)
 
-
+18% - выемка запросов
+47% - delete 
+8%  - отправка ответа
+ 
 # alloc
 
  ![alt text](https://github.com/re1nex/2020-highload-dht/blob/hw1/profiling_info/del/alloc.png)
 
 Почти 60% ушло на del 
+8%  - отправка ответа
