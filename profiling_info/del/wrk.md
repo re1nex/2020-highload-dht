@@ -1,0 +1,34 @@
+1 threads and 1 connections
+  Thread calibration: mean lat.: 1.045ms, rate sampling interval: 10ms
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     1.06ms  599.02us  28.45ms   73.89%
+    Req/Sec     2.11k   177.36     8.11k    70.19%
+  Latency Distribution (HdrHistogram - Recorded Latency)
+ 50.000%    1.04ms
+ 75.000%    1.37ms
+ 90.000%    1.74ms
+ 99.000%    2.11ms
+ 99.900%    3.77ms
+ 99.990%   21.63ms
+ 99.999%   27.34ms
+100.000%   28.46ms
+
+#[Mean    =        1.057, StdDeviation   =        0.599]
+#[Max     =       28.448, Total count    =       339990]
+#[Buckets =           27, SubBuckets     =         2048]
+----------------------------------------------------------
+  359997 requests in 3.00m, 23.35MB read
+Requests/sec:   1999.99
+Transfer/sec:    132.81KB
+
+
+# cpu
+
+![alt text](https://github.com/re1nex/2020-highload-dht/blob/hw1/profiling_info/del/cpu.png)
+
+
+# alloc
+
+ ![alt text](https://github.com/re1nex/2020-highload-dht/blob/hw1/profiling_info/del/alloc.png)
+
+Почти 60% ушло на del , правда опять большая часть ушла на логи, стоит видимо оптимизировать этот момент
