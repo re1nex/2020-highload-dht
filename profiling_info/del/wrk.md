@@ -31,4 +31,4 @@ Transfer/sec:    132.81KB
 
  ![alt text](https://github.com/re1nex/2020-highload-dht/blob/hw1/profiling_info/del/alloc.png)
 
-Почти 60% ушло на del , правда опять большая часть ушла на логи, стоит видимо оптимизировать этот момент
+Почти 60% ушло на del 
