@@ -54,7 +54,7 @@ public class AsyncService extends HttpServer implements Service {
         this.dao = dao;
         this.executor = new ThreadPoolExecutor(
                 workersCount,
-                queueSize,
+                workersCount,
                 0L,
                 TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(queueSize),

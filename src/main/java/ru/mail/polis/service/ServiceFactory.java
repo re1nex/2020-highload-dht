@@ -18,7 +18,9 @@ package ru.mail.polis.service;
 
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.dao.DAO;
-import ru.mail.polis.service.re1nex.AsyncService;
+import ru.mail.polis.dao.re1nex.ModTopology;
+import ru.mail.polis.dao.re1nex.Topology;
+import ru.mail.polis.service.re1nex.AsyncTopologyService;
 
 import java.io.IOException;
 import java.util.Set;
@@ -56,6 +58,11 @@ public final class ServiceFactory {
             throw new IllegalArgumentException("Port out of range");
         }
 
-        return new AsyncService(port, dao, Runtime.getRuntime().availableProcessors(), 16);
+        final Topology<String> modTopology = new ModTopology(topology, "http://localhost:" + port);
+        return new AsyncTopologyService(port,
+                dao,
+                Runtime.getRuntime().availableProcessors(),
+                16,
+                modTopology);
     }
 }

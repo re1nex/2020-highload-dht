@@ -5,10 +5,12 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.ByteBuffer;
 
 public interface Topology<N> {
-    N primaryFor(@NotNull ByteBuffer key);
+    N primaryFor(@NotNull final ByteBuffer key);
 
     int size();
 
     @NotNull
     N[] all();
+
+    boolean isLocal(@NotNull final N node);
 }
