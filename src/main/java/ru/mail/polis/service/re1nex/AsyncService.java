@@ -152,7 +152,8 @@ public class AsyncService extends HttpServer implements Service {
                             logger.info("PUT failed! Id is empty!");
                             session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
                         }
-                        dao.upsert(ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8)), ByteBuffer.wrap(request.getBody()));
+                        dao.upsert(ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8)),
+                                ByteBuffer.wrap(request.getBody()));
                         session.sendResponse(new Response(Response.CREATED, Response.EMPTY));
                     } catch (IOException e) {
                         logger.error("PUT failed! Cannot put the element: {}. Request: {}. Cause: {}",
@@ -163,7 +164,7 @@ public class AsyncService extends HttpServer implements Service {
                 session);
     }
 
-    private void sendErrorResponse(HttpSession session, String internalError) {
+    private void sendErrorResponse(final HttpSession session, final String internalError) {
         try {
             session.sendResponse(new Response(internalError, Response.EMPTY));
         } catch (IOException ioException) {
@@ -209,7 +210,7 @@ public class AsyncService extends HttpServer implements Service {
         }
     }
 
-    private void executeTask(Runnable task, final HttpSession session) {
+    private void executeTask(final Runnable task, final HttpSession session) {
         try {
             executor.execute(task);
         } catch (RejectedExecutionException e) {
