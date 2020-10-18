@@ -76,29 +76,17 @@ public class AsyncService extends HttpServer implements Service {
 
     /**
      * Provide service status.
-     *
-     * @param session - current HttpSession
      */
     @Path("/v0/status")
-    public void status(final HttpSession session) {
-        executeTask(() -> {
-                    try {
-                        session.sendResponse(Response.ok("OK"));
-                    } catch (IOException e) {
-                        logger.error(RESPONSE_ERROR, e);
-                    }
-                },
-                session);
+    public Response status() {
+        return Response.ok(Response.OK);
     }
 
     @Override
     public void handleDefault(final Request request, final HttpSession session) throws IOException {
-        executeTask(() -> {
-                    logger.info("Unsupported mapping request.\n Cannot understand it: {} {}",
-                            request.getMethodName(), request.getPath());
-                    sendErrorResponse(session, Response.BAD_REQUEST);
-                },
-                session);
+        logger.info("Unsupported mapping request.\n Cannot understand it: {} {}",
+                request.getMethodName(), request.getPath());
+        session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
     }
 
     /**
@@ -116,6 +104,7 @@ public class AsyncService extends HttpServer implements Service {
                         if (id.isEmpty()) {
                             logger.info("GET failed! Id is empty!");
                             session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
+                            return;
                         }
                         final ByteBuffer result = dao.get(ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8)));
                         if (result.hasRemaining()) {
@@ -151,6 +140,7 @@ public class AsyncService extends HttpServer implements Service {
                         if (id.isEmpty()) {
                             logger.info("PUT failed! Id is empty!");
                             session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
+                            return;
                         }
                         dao.upsert(ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8)),
                                 ByteBuffer.wrap(request.getBody()));
@@ -187,6 +177,7 @@ public class AsyncService extends HttpServer implements Service {
                         if (id.isEmpty()) {
                             logger.info("DELETE failed! Id is empty!");
                             session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
+                            return;
                         }
                         dao.remove(ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8)));
                         session.sendResponse(new Response(Response.ACCEPTED, Response.EMPTY));
