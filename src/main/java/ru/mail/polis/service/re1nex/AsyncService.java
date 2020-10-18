@@ -20,6 +20,7 @@ import ru.mail.polis.service.Service;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
@@ -103,23 +104,34 @@ public class AsyncService extends HttpServer implements Service {
                     try {
                         if (id.isEmpty()) {
                             logger.info("GET failed! Id is empty!");
-                            session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
+                            sendResponse(session, new Response(Response.BAD_REQUEST, Response.EMPTY));
                             return;
                         }
                         final ByteBuffer result = dao.get(ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8)));
                         if (result.hasRemaining()) {
                             final byte[] resultByteArray = new byte[result.remaining()];
                             result.get(resultByteArray);
-                            session.sendResponse(new Response(Response.OK, resultByteArray));
+                            sendResponse(session, new Response(Response.OK, resultByteArray));
                         } else {
-                            session.sendResponse(new Response(Response.OK, Response.EMPTY));
+                            sendResponse(session, new Response(Response.OK, Response.EMPTY));
                         }
                     } catch (IOException e) {
                         logger.error("GET element " + id, e);
                         sendErrorResponse(session, Response.INTERNAL_ERROR);
+                    } catch (NoSuchElementException exception) {
+                        logger.info("GET failed! no element " + id, exception);
+                        sendErrorResponse(session, Response.NOT_FOUND);
                     }
                 },
                 session);
+    }
+
+    private void sendResponse(@NotNull final HttpSession session, @NotNull final Response response) {
+        try {
+            session.sendResponse(response);
+        } catch (IOException e) {
+            logger.error("Cannot send respose", e);
+        }
     }
 
     /**
@@ -139,12 +151,12 @@ public class AsyncService extends HttpServer implements Service {
                     try {
                         if (id.isEmpty()) {
                             logger.info("PUT failed! Id is empty!");
-                            session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
+                            sendResponse(session, new Response(Response.BAD_REQUEST, Response.EMPTY));
                             return;
                         }
                         dao.upsert(ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8)),
                                 ByteBuffer.wrap(request.getBody()));
-                        session.sendResponse(new Response(Response.CREATED, Response.EMPTY));
+                        sendResponse(session, new Response(Response.CREATED, Response.EMPTY));
                     } catch (IOException e) {
                         logger.error("PUT failed! Cannot put the element: {}. Request: {}. Cause: {}",
                                 id, request.getBody(), e.getCause());
@@ -176,11 +188,11 @@ public class AsyncService extends HttpServer implements Service {
                     try {
                         if (id.isEmpty()) {
                             logger.info("DELETE failed! Id is empty!");
-                            session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
+                            sendResponse(session, new Response(Response.BAD_REQUEST, Response.EMPTY));
                             return;
                         }
                         dao.remove(ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8)));
-                        session.sendResponse(new Response(Response.ACCEPTED, Response.EMPTY));
+                        sendResponse(session, new Response(Response.ACCEPTED, Response.EMPTY));
                     } catch (IOException e) {
                         logger.error("DELETE failed! Cannot get the element {}.\n Error: {}", id, e.getMessage(), e);
                         sendErrorResponse(session, Response.INTERNAL_ERROR);
