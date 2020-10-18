@@ -155,7 +155,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
                         } catch (IOException e) {
                             logger.error("GET element " + id, e);
                             sendErrorResponse(session, Response.INTERNAL_ERROR);
-                        }catch (NoSuchElementException exception){
+                        } catch (NoSuchElementException exception) {
                             logger.info("GET failed! no element " + id, exception);
                             sendErrorResponse(session, Response.NOT_FOUND);
                         }
