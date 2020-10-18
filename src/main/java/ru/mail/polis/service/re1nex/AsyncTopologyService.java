@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
@@ -35,7 +36,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
     @NonNull
     private static final String RESPONSE_ERROR = "Can't send response error";
     @NotNull
-    private static final Logger logger = LoggerFactory.getLogger(AsyncService.class);
+    private static final Logger logger = LoggerFactory.getLogger(AsyncTopologyService.class);
     @NotNull
     private final DAO dao;
     @NotNull
@@ -137,6 +138,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
                     if (id.isEmpty()) {
                         logger.info("GET failed! Id is empty!");
                         sendErrorResponse(session, Response.BAD_REQUEST);
+                        return;
                     }
                     final ByteBuffer key = getByteBufferKey(id);
                     final String node = topology.primaryFor(key);
@@ -153,6 +155,9 @@ public class AsyncTopologyService extends HttpServer implements Service {
                         } catch (IOException e) {
                             logger.error("GET element " + id, e);
                             sendErrorResponse(session, Response.INTERNAL_ERROR);
+                        }catch (NoSuchElementException exception){
+                            logger.info("GET failed! no element " + id, exception);
+                            sendErrorResponse(session, Response.NOT_FOUND);
                         }
                     } else {
                         proxy(node, request, session);
@@ -196,6 +201,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
                     if (id.isEmpty()) {
                         logger.info("PUT failed! Id is empty!");
                         sendErrorResponse(session, Response.BAD_REQUEST);
+                        return;
                     }
                     final ByteBuffer key = getByteBufferKey(id);
                     final String node = topology.primaryFor(key);
@@ -240,6 +246,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
                     if (id.isEmpty()) {
                         logger.info("DELETE failed! Id is empty!");
                         sendErrorResponse(session, Response.BAD_REQUEST);
+                        return;
                     }
                     final ByteBuffer key = getByteBufferKey(id);
                     final String node = topology.primaryFor(key);
@@ -269,7 +276,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
             Thread.currentThread().interrupt();
         }
         for (HttpClient client : nodeToClient.values()) {
-            client.close();
+            client.clear();
         }
     }
 
