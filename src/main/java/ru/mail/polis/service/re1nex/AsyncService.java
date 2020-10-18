@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 public class AsyncService extends HttpServer implements Service {
     @NonNull
-    private static final String RESPONSE_ERROR = "Can't send response error";
+    private static final String RESPONSE_ERROR = "Can't send response error ";
     @NotNull
     private static final Logger logger = LoggerFactory.getLogger(AsyncService.class);
     @NotNull
