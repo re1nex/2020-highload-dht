@@ -59,6 +59,9 @@ public class ConsistentHashingTopology implements Topology<String> {
     @NotNull
     @Override
     public String[] all() {
-        return map.values().toArray(new String[0]);
+        return map.values()
+                .stream()
+                .distinct()
+                .toArray(String[]::new);
     }
 }
