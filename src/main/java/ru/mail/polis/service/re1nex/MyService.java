@@ -22,9 +22,9 @@ import java.util.NoSuchElementException;
 
 public class MyService extends HttpServer implements Service {
     @NotNull
-    private final DAO dao;
-    @NotNull
     private static final Logger logger = LoggerFactory.getLogger(MyService.class);
+    @NotNull
+    private final DAO dao;
 
     /**
      * Service for work with requests.
@@ -57,7 +57,7 @@ public class MyService extends HttpServer implements Service {
 
     @Override
     public void handleDefault(final Request request, final HttpSession session) throws IOException {
-        logger.error("Unsupported mapping request.\n Cannot understand it: {} {}",
+        logger.info("Unsupported mapping request.\n Cannot understand it: {} {}",
                 request.getMethodName(), request.getPath());
         session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
     }
@@ -71,16 +71,15 @@ public class MyService extends HttpServer implements Service {
     @Path("/v0/entity")
     @RequestMethod(Request.METHOD_GET)
     public Response get(@Param(value = "id", required = true) final String id) {
-        logger.error("GET element {}.", id);
         if (id.isEmpty()) {
-            logger.debug("GET failed! Id is empty!");
+            logger.info("GET failed! Id is empty!");
             return new Response(Response.BAD_REQUEST, Response.EMPTY);
         }
         ByteBuffer result;
         try {
             result = dao.get(ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchElementException e) {
-            logger.error("GET failed! Cannot find the element {}.\n Cause: {} ", id, e.getCause(), e);
+            logger.info("GET failed! Cannot find the element {}.\n Cause: {} ", id, e.getCause(), e);
             return new Response(Response.NOT_FOUND, Response.EMPTY);
         } catch (IOException e) {
             logger.error("GET failed! Cannot get the element {}.\n Error: {}.", id, e.getMessage(), e);
@@ -105,15 +104,14 @@ public class MyService extends HttpServer implements Service {
     @Path("/v0/entity")
     @RequestMethod(Request.METHOD_PUT)
     public Response put(@Param(value = "id", required = true) final String id, @NotNull final Request request) {
-        logger.error("PUT element {}.", id);
         if (id.isEmpty()) {
-            logger.debug("PUT failed! Id is empty!");
+            logger.info("PUT failed! Id is empty!");
             return new Response(Response.BAD_REQUEST, Response.EMPTY);
         }
         try {
             dao.upsert(ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8)), ByteBuffer.wrap(request.getBody()));
         } catch (IOException e) {
-            logger.debug("PUT failed! Cannot put the element: {}. Request: {}. Cause: {}",
+            logger.error("PUT failed! Cannot put the element: {}. Request: {}. Cause: {}",
                     id, request.getBody(), e.getCause());
             return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
         }
@@ -129,9 +127,8 @@ public class MyService extends HttpServer implements Service {
     @Path("/v0/entity")
     @RequestMethod(Request.METHOD_DELETE)
     public Response delete(@Param(value = "id", required = true) final String id) {
-        logger.error("DELETE element {}.", id);
         if (id.isEmpty()) {
-            logger.debug("DELETE failed! Id is empty!");
+            logger.info("DELETE failed! Id is empty!");
             return new Response(Response.BAD_REQUEST, Response.EMPTY);
         }
         try {
