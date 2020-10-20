@@ -18,7 +18,7 @@ package ru.mail.polis.service;
 
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.dao.DAO;
-import ru.mail.polis.dao.re1nex.ModTopology;
+import ru.mail.polis.dao.re1nex.ConsistentHashingTopology;
 import ru.mail.polis.dao.re1nex.Topology;
 import ru.mail.polis.service.re1nex.AsyncTopologyService;
 
@@ -58,7 +58,7 @@ public final class ServiceFactory {
             throw new IllegalArgumentException("Port out of range");
         }
 
-        final Topology<String> modTopology = new ModTopology(topology, "http://localhost:" + port);
+        final Topology<String> modTopology = new ConsistentHashingTopology(topology, "http://localhost:" + port);
         return new AsyncTopologyService(port,
                 dao,
                 Runtime.getRuntime().availableProcessors(),

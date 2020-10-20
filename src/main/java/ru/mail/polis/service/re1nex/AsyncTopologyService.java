@@ -2,6 +2,7 @@ package ru.mail.polis.service.re1nex;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import one.nio.http.HttpClient;
+import one.nio.http.HttpException;
 import one.nio.http.HttpServer;
 import one.nio.http.HttpServerConfig;
 import one.nio.http.HttpSession;
@@ -11,9 +12,11 @@ import one.nio.http.Request;
 import one.nio.http.RequestMethod;
 import one.nio.http.Response;
 import one.nio.net.ConnectionString;
+import one.nio.pool.PoolException;
 import one.nio.server.AcceptorConfig;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.mail.polis.dao.DAO;
@@ -26,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
@@ -134,14 +138,9 @@ public class AsyncTopologyService extends HttpServer implements Service {
                     final String node = topology.primaryFor(key);
                     if (topology.isLocal(node)) {
                         try {
-                            final ByteBuffer result = dao.get(key);
-                            if (result.hasRemaining()) {
-                                final byte[] resultByteArray = new byte[result.remaining()];
-                                result.get(resultByteArray);
-                                sendResponse(session, new Response(Response.OK, resultByteArray));
-                            } else {
-                                sendResponse(session, new Response(Response.OK, Response.EMPTY));
-                            }
+                            final byte[] result = ByteBufferToByte(dao.get(key));
+                            sendResponse(session, new Response(Response.OK,
+                                    Objects.requireNonNullElse(result, Response.EMPTY)));
                         } catch (IOException e) {
                             logger.error("GET element " + id, e);
                             sendErrorResponse(session, Response.INTERNAL_ERROR);
@@ -154,6 +153,17 @@ public class AsyncTopologyService extends HttpServer implements Service {
                     }
                 },
                 session);
+    }
+
+    @Nullable
+    private byte[] ByteBufferToByte(@NotNull final ByteBuffer result) {
+        if (result.hasRemaining()) {
+            final byte[] resultByteArray = new byte[result.remaining()];
+            result.get(resultByteArray);
+            return resultByteArray;
+        } else {
+            return null;
+        }
     }
 
     private void sendResponse(@NotNull final HttpSession session, @NotNull final Response response) {
@@ -171,14 +181,14 @@ public class AsyncTopologyService extends HttpServer implements Service {
         try {
             request.addHeader("X-Proxy-For: " + node);
             sendResponse(session, nodeToClient.get(node).invoke(request));
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException | PoolException | HttpException e) {
             logger.error(RESPONSE_ERROR, e);
             sendErrorResponse(session, Response.INTERNAL_ERROR);
         }
     }
 
     @NotNull
-    private ByteBuffer getByteBufferKey(String id) {
+    private ByteBuffer getByteBufferKey(@NotNull final String id) {
         return ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
     }
 
@@ -253,7 +263,8 @@ public class AsyncTopologyService extends HttpServer implements Service {
                             dao.remove(getByteBufferKey(id));
                             sendResponse(session, new Response(Response.ACCEPTED, Response.EMPTY));
                         } catch (IOException e) {
-                            logger.error("DELETE failed! Cannot get the element {}.\n Error: {}", id, e.getMessage(), e);
+                            logger.error("DELETE failed! Cannot get the element {}.\n Error: {}",
+                                    id, e.getMessage(), e);
                             sendErrorResponse(session, Response.INTERNAL_ERROR);
                         }
                     } else {
@@ -273,7 +284,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
             logger.error("Can't shutdown execution");
             Thread.currentThread().interrupt();
         }
-        for (HttpClient client : nodeToClient.values()) {
+        for (final HttpClient client : nodeToClient.values()) {
             client.clear();
         }
     }
