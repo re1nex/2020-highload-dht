@@ -98,28 +98,18 @@ public class AsyncTopologyService extends HttpServer implements Service {
     /**
      * Provide service status.
      *
-     * @param session - current HttpSession
+     * @return Response - status
      */
     @Path("/v0/status")
-    public void status(final HttpSession session) {
-        executeTask(() -> {
-                    try {
-                        session.sendResponse(Response.ok("OK"));
-                    } catch (IOException e) {
-                        logger.error(RESPONSE_ERROR, e);
-                    }
-                },
-                session);
+    public Response status() {
+        return Response.ok(Response.OK);
     }
 
     @Override
     public void handleDefault(final Request request, final HttpSession session) throws IOException {
-        executeTask(() -> {
-                    logger.info("Unsupported mapping request.\n Cannot understand it: {} {}",
-                            request.getMethodName(), request.getPath());
-                    sendErrorResponse(session, Response.BAD_REQUEST);
-                },
-                session);
+        logger.info("Unsupported mapping request.\n Cannot understand it: {} {}",
+                request.getMethodName(), request.getPath());
+        session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
     }
 
     /**
@@ -148,9 +138,9 @@ public class AsyncTopologyService extends HttpServer implements Service {
                             if (result.hasRemaining()) {
                                 final byte[] resultByteArray = new byte[result.remaining()];
                                 result.get(resultByteArray);
-                                session.sendResponse(new Response(Response.OK, resultByteArray));
+                                sendResponse(session, new Response(Response.OK, resultByteArray));
                             } else {
-                                session.sendResponse(new Response(Response.OK, Response.EMPTY));
+                                sendResponse(session, new Response(Response.OK, Response.EMPTY));
                             }
                         } catch (IOException e) {
                             logger.error("GET element " + id, e);
@@ -166,13 +156,21 @@ public class AsyncTopologyService extends HttpServer implements Service {
                 session);
     }
 
+    private void sendResponse(@NotNull final HttpSession session, @NotNull final Response response) {
+        try {
+            session.sendResponse(response);
+        } catch (IOException e) {
+            logger.error("Cannot send respose", e);
+        }
+    }
+
     private void proxy(
             @NotNull final String node,
             @NotNull final Request request,
             @NotNull final HttpSession session) {
         try {
             request.addHeader("X-Proxy-For: " + node);
-            session.sendResponse(nodeToClient.get(node).invoke(request));
+            sendResponse(session, nodeToClient.get(node).invoke(request));
         } catch (Exception e) {
             logger.error(RESPONSE_ERROR, e);
             sendErrorResponse(session, Response.INTERNAL_ERROR);
@@ -180,7 +178,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
     }
 
     @NotNull
-    private ByteBuffer getByteBufferKey(@Param(value = "id", required = true) String id) {
+    private ByteBuffer getByteBufferKey(String id) {
         return ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
     }
 
@@ -209,7 +207,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
                         try {
                             dao.upsert(key,
                                     ByteBuffer.wrap(request.getBody()));
-                            session.sendResponse(new Response(Response.CREATED, Response.EMPTY));
+                            sendResponse(session, new Response(Response.CREATED, Response.EMPTY));
                         } catch (IOException e) {
                             logger.error("PUT failed! Cannot put the element: {}. Request: {}. Cause: {}",
                                     id, request.getBody(), e.getCause());
@@ -253,7 +251,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
                     if (topology.isLocal(node)) {
                         try {
                             dao.remove(getByteBufferKey(id));
-                            session.sendResponse(new Response(Response.ACCEPTED, Response.EMPTY));
+                            sendResponse(session, new Response(Response.ACCEPTED, Response.EMPTY));
                         } catch (IOException e) {
                             logger.error("DELETE failed! Cannot get the element {}.\n Error: {}", id, e.getMessage(), e);
                             sendErrorResponse(session, Response.INTERNAL_ERROR);
