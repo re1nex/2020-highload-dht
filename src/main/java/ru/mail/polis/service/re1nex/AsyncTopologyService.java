@@ -16,7 +16,6 @@ import one.nio.pool.PoolException;
 import one.nio.server.AcceptorConfig;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.mail.polis.dao.DAO;
@@ -29,7 +28,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
@@ -139,8 +137,11 @@ public class AsyncTopologyService extends HttpServer implements Service {
                     if (topology.isLocal(node)) {
                         try {
                             final byte[] result = ByteBufferToByte(dao.get(key));
-                            sendResponse(session, new Response(Response.OK,
-                                    Objects.requireNonNullElse(result, Response.EMPTY)));
+                            if (result.length > 0) {
+                                sendResponse(session, new Response(Response.OK, result));
+                            } else {
+                                sendResponse(session, new Response(Response.OK, Response.EMPTY));
+                            }
                         } catch (IOException e) {
                             logger.error("GET element " + id, e);
                             sendErrorResponse(session, Response.INTERNAL_ERROR);
@@ -155,14 +156,13 @@ public class AsyncTopologyService extends HttpServer implements Service {
                 session);
     }
 
-    @Nullable
     private byte[] ByteBufferToByte(@NotNull final ByteBuffer result) {
         if (result.hasRemaining()) {
             final byte[] resultByteArray = new byte[result.remaining()];
             result.get(resultByteArray);
             return resultByteArray;
         } else {
-            return null;
+            return new byte[0];
         }
     }
 
