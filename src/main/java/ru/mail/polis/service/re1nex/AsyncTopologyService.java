@@ -136,7 +136,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
                     final String node = topology.primaryFor(key);
                     if (topology.isLocal(node)) {
                         try {
-                            final byte[] result = ByteBufferToByte(dao.get(key));
+                            final byte[] result = byteBufferToByte(dao.get(key));
                             if (result.length > 0) {
                                 sendResponse(session, new Response(Response.OK, result));
                             } else {
@@ -156,7 +156,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
                 session);
     }
 
-    private byte[] ByteBufferToByte(@NotNull final ByteBuffer result) {
+    private byte[] byteBufferToByte(@NotNull final ByteBuffer result) {
         if (result.hasRemaining()) {
             final byte[] resultByteArray = new byte[result.remaining()];
             result.get(resultByteArray);
