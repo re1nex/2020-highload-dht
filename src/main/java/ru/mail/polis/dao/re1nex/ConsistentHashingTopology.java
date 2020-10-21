@@ -9,6 +9,7 @@ import java.util.TreeMap;
 
 public class ConsistentHashingTopology implements Topology<String> {
 
+    private static final int NUM_VIRTUAL_NODES = 5;
     @NotNull
     private final String local;
     @NotNull
@@ -23,11 +24,9 @@ public class ConsistentHashingTopology implements Topology<String> {
     public ConsistentHashingTopology(
             @NotNull final Collection<String> nodes,
             @NotNull final String local) {
-        final int numOfNodes = nodes.size();
         this.local = local;
-
         for (final String node : nodes) {
-            for (int i = 0; i < numOfNodes; i++) {
+            for (int i = 0; i < NUM_VIRTUAL_NODES; i++) {
                 map.put((node + i).hashCode(), node);
             }
         }
@@ -42,12 +41,8 @@ public class ConsistentHashingTopology implements Topology<String> {
     @Override
     public String primaryFor(@NotNull final ByteBuffer key) {
         int hash = key.hashCode();
-
-        if (!map.containsKey(hash)) {
-            final SortedMap<Integer, String> tailMap = map.tailMap(hash);
-            hash = tailMap.isEmpty() ? map.firstKey() : tailMap.firstKey();
-        }
-
+        final SortedMap<Integer, String> tailMap = map.tailMap(hash);
+        hash = tailMap.isEmpty() ? map.firstKey() : tailMap.firstKey();
         return map.get(hash);
     }
 

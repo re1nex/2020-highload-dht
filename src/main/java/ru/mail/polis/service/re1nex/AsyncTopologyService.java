@@ -40,6 +40,8 @@ public class AsyncTopologyService extends HttpServer implements Service {
     @NotNull
     private static final Logger logger = LoggerFactory.getLogger(AsyncTopologyService.class);
     @NotNull
+    private final byte[] emptyArray = new byte[0];
+    @NotNull
     private final DAO dao;
     @NotNull
     private final ExecutorService executor;
@@ -162,7 +164,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
             result.get(resultByteArray);
             return resultByteArray;
         } else {
-            return new byte[0];
+            return emptyArray;
         }
     }
 
