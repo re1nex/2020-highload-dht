@@ -182,7 +182,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
             @NotNull final HttpSession session) {
         try {
             request.addHeader("X-Proxy-For: " + node);
-            sendResponse(session, nodeToClient.get(node).invoke(request));
+            session.sendResponse(nodeToClient.get(node).invoke(request));
         } catch (IOException | InterruptedException | PoolException | HttpException e) {
             logger.error(RESPONSE_ERROR, e);
             sendErrorResponse(session, Response.INTERNAL_ERROR);

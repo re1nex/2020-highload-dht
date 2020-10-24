@@ -27,7 +27,11 @@ public class ConsistentHashingTopology implements Topology<String> {
         this.local = local;
         for (final String node : nodes) {
             for (int i = 0; i < NUM_VIRTUAL_NODES; i++) {
-                map.put((node + i).hashCode(), node);
+                int newHash = node.hashCode();
+                for (int j = 0; j < i; j++) {
+                    newHash += node.hashCode();
+                }
+                map.put(newHash, node);
             }
         }
     }
