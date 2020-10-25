@@ -75,10 +75,10 @@ public class ConsistentHashingTopology implements Topology<String> {
             instance = MessageDigest.getInstance("MD5");
         }
 
-        long hash(byte[] key) {
+        long hash(final byte[] key) {
             instance.reset();
             instance.update(key);
-            byte[] digest = instance.digest();
+            final byte[] digest = instance.digest();
 
             long h = 0;
             for (int i = 0; i < 4; i++) {
