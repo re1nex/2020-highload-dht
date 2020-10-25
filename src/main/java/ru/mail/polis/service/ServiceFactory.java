@@ -23,6 +23,8 @@ import ru.mail.polis.dao.re1nex.Topology;
 import ru.mail.polis.service.re1nex.AsyncTopologyService;
 
 import java.io.IOException;
+import java.rmi.NoSuchObjectException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 
 /**
@@ -58,7 +60,12 @@ public final class ServiceFactory {
             throw new IllegalArgumentException("Port out of range");
         }
 
-        final Topology<String> modTopology = new ConsistentHashingTopology(topology, "http://localhost:" + port);
+        final Topology<String> modTopology;
+        try {
+            modTopology = new ConsistentHashingTopology(topology, "http://localhost:" + port);
+        } catch (NoSuchAlgorithmException e) {
+            throw new NoSuchObjectException(e.getMessage());
+        }
         return new AsyncTopologyService(port,
                 dao,
                 Runtime.getRuntime().availableProcessors(),

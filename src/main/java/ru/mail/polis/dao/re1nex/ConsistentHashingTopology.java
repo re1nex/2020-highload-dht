@@ -3,9 +3,13 @@ package ru.mail.polis.dao.re1nex;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ConsistentHashingTopology implements Topology<String> {
 
@@ -13,7 +17,9 @@ public class ConsistentHashingTopology implements Topology<String> {
     @NotNull
     private final String local;
     @NotNull
-    private final SortedMap<Integer, String> map = new TreeMap<>();
+    private final SortedMap<Long, String> map = new TreeMap<>();
+    @NotNull
+    private final SHA256Hash hashFunc = new SHA256Hash();
 
     /**
      * Provides topology by consistent hashing.
@@ -23,15 +29,12 @@ public class ConsistentHashingTopology implements Topology<String> {
      */
     public ConsistentHashingTopology(
             @NotNull final Collection<String> nodes,
-            @NotNull final String local) {
+            @NotNull final String local) throws NoSuchAlgorithmException {
         this.local = local;
         for (final String node : nodes) {
             for (int i = 0; i < NUM_VIRTUAL_NODES; i++) {
-                int newHash = node.hashCode();
-                for (int j = 0; j < i; j++) {
-                    newHash += node.hashCode();
-                }
-                map.put(newHash, node);
+                final String newHash = node + i;
+                map.put(hashFunc.hash(newHash.getBytes(UTF_8)), node);
             }
         }
     }
@@ -44,8 +47,9 @@ public class ConsistentHashingTopology implements Topology<String> {
     @NotNull
     @Override
     public String primaryFor(@NotNull final ByteBuffer key) {
-        int hash = key.hashCode();
-        final SortedMap<Integer, String> tailMap = map.tailMap(hash);
+        final byte[] keyByte = new byte[key.remaining()];
+        long hash = hashFunc.hash(keyByte);
+        final SortedMap<Long, String> tailMap = map.tailMap(hash);
         hash = tailMap.isEmpty() ? map.firstKey() : tailMap.firstKey();
         return map.get(hash);
     }
@@ -63,4 +67,27 @@ public class ConsistentHashingTopology implements Topology<String> {
                 .distinct()
                 .toArray(String[]::new);
     }
+
+    private static class SHA256Hash {
+        MessageDigest instance;
+
+        SHA256Hash() throws NoSuchAlgorithmException {
+            instance = MessageDigest.getInstance("SHA-256");
+
+        }
+
+        long hash(byte[] key) {
+            instance.reset();
+            instance.update(key);
+            byte[] digest = instance.digest();
+
+            long h = 0;
+            for (int i = 0; i < 4; i++) {
+                h <<= 8;
+                h |= ((int) digest[i]) & 0xFF;
+            }
+            return h;
+        }
+    }
+
 }
