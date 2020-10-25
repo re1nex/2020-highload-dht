@@ -23,7 +23,6 @@ import ru.mail.polis.dao.re1nex.Topology;
 import ru.mail.polis.service.re1nex.AsyncTopologyService;
 
 import java.io.IOException;
-import java.rmi.NoSuchObjectException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 
