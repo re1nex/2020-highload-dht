@@ -23,7 +23,6 @@ import ru.mail.polis.service.ServiceFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -39,7 +38,7 @@ public final class Cluster {
         // Not instantiable
     }
 
-    public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
+    public static void main(String[] args) throws IOException {
         // Fill the topology
         final Set<String> topology = new HashSet<>(3);
         for (final int port : PORTS) {

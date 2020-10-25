@@ -23,6 +23,7 @@ import ru.mail.polis.dao.re1nex.Topology;
 import ru.mail.polis.service.re1nex.AsyncTopologyService;
 
 import java.io.IOException;
+import java.rmi.NoSuchObjectException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 
@@ -50,7 +51,7 @@ public final class ServiceFactory {
     public static Service create(
             final int port,
             @NotNull final DAO dao,
-            @NotNull final Set<String> topology) throws IOException, NoSuchAlgorithmException {
+            @NotNull final Set<String> topology) throws IOException {
         if (Runtime.getRuntime().maxMemory() > MAX_HEAP) {
             throw new IllegalStateException("The heap is too big. Consider setting Xmx.");
         }
@@ -60,7 +61,11 @@ public final class ServiceFactory {
         }
 
         final Topology<String> modTopology;
-        modTopology = new ConsistentHashingTopology(topology, "http://localhost:" + port);
+        try {
+            modTopology = new ConsistentHashingTopology(topology, "http://localhost:" + port);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IOException(e);
+        }
         return new AsyncTopologyService(port,
                 dao,
                 Runtime.getRuntime().availableProcessors(),
