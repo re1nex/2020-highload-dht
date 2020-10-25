@@ -19,7 +19,7 @@ public class ConsistentHashingTopology implements Topology<String> {
     @NotNull
     private final SortedMap<Long, String> map = new TreeMap<>();
     @NotNull
-    private final SHA256Hash hashFunc = new SHA256Hash();
+    private final MD5Hash hashFunc = new MD5Hash();
 
     /**
      * Provides topology by consistent hashing.
@@ -68,12 +68,11 @@ public class ConsistentHashingTopology implements Topology<String> {
                 .toArray(String[]::new);
     }
 
-    private static class SHA256Hash {
+    private static class MD5Hash {
         MessageDigest instance;
 
-        SHA256Hash() throws NoSuchAlgorithmException {
-            instance = MessageDigest.getInstance("SHA-256");
-
+        MD5Hash() throws NoSuchAlgorithmException {
+            instance = MessageDigest.getInstance("MD5");
         }
 
         long hash(byte[] key) {
