@@ -32,7 +32,8 @@ public class ConsistentHashingTopology implements Topology<String> {
         for (final String node : nodes) {
             for (int i = 0; i < NUM_VIRTUAL_NODES; i++) {
                 final String newHash = node + i;
-                map.put(calculateHash(newHash.getBytes(UTF_8)), node);
+                final long hash = calculateHash(newHash.getBytes((UTF_8)));
+                map.put(hash, node);
             }
         }
     }

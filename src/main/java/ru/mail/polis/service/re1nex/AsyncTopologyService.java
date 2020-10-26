@@ -143,20 +143,7 @@ public class AsyncTopologyService extends HttpServer implements Service {
                         return;
                     }
                     if (topology.isLocal(node)) {
-                        try {
-                            final byte[] result = byteBufferUtils.byteBufferToByte(dao.get(key));
-                            if (result.length > 0) {
-                                apiUtils.sendResponse(session, new Response(Response.OK, result), logger);
-                            } else {
-                                apiUtils.sendResponse(session, new Response(Response.OK, Response.EMPTY), logger);
-                            }
-                        } catch (IOException e) {
-                            logger.error("GET element " + id, e);
-                            apiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
-                        } catch (NoSuchElementException exception) {
-                            logger.info("GET failed! no element " + id, exception);
-                            apiUtils.sendErrorResponse(session, Response.NOT_FOUND, logger);
-                        }
+                        getFromNode(session, key, id);
                     } else {
                         apiUtils.proxy(node,
                                 request,
@@ -166,6 +153,25 @@ public class AsyncTopologyService extends HttpServer implements Service {
                     }
                 },
                 session);
+    }
+
+    private void getFromNode(@NotNull final HttpSession session,
+                             @NotNull final ByteBuffer key,
+                             @NotNull final String id) {
+        try {
+            final byte[] result = byteBufferUtils.byteBufferToByte(dao.get(key));
+            if (result.length > 0) {
+                apiUtils.sendResponse(session, new Response(Response.OK, result), logger);
+            } else {
+                apiUtils.sendResponse(session, new Response(Response.OK, Response.EMPTY), logger);
+            }
+        } catch (IOException e) {
+            logger.error("GET element " + id, e);
+            apiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
+        } catch (NoSuchElementException exception) {
+            logger.info("GET failed! no element " + id, exception);
+            apiUtils.sendErrorResponse(session, Response.NOT_FOUND, logger);
+        }
     }
 
     /**
