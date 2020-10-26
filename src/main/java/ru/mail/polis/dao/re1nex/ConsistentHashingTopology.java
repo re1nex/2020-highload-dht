@@ -18,8 +18,6 @@ public class ConsistentHashingTopology implements Topology<String> {
     private final String local;
     @NotNull
     private final SortedMap<Long, String> map = new TreeMap<>();
-    @NotNull
-    private final MD5Hash hashFunc = new MD5Hash();
 
     /**
      * Provides topology by consistent hashing.
@@ -34,7 +32,7 @@ public class ConsistentHashingTopology implements Topology<String> {
         for (final String node : nodes) {
             for (int i = 0; i < NUM_VIRTUAL_NODES; i++) {
                 final String newHash = node + i;
-                map.put(hashFunc.hash(newHash.getBytes(UTF_8)), node);
+                map.put(hash(newHash.getBytes(UTF_8)), node);
             }
         }
     }
@@ -46,9 +44,9 @@ public class ConsistentHashingTopology implements Topology<String> {
 
     @NotNull
     @Override
-    public String primaryFor(@NotNull final ByteBuffer key) {
+    public String primaryFor(@NotNull final ByteBuffer key) throws NoSuchAlgorithmException {
         final byte[] keyByte = new byte[key.remaining()];
-        long hash = hashFunc.hash(keyByte);
+        long hash = hash(keyByte);
         final SortedMap<Long, String> tailMap = map.tailMap(hash);
         hash = tailMap.isEmpty() ? map.firstKey() : tailMap.firstKey();
         return map.get(hash);
@@ -68,25 +66,18 @@ public class ConsistentHashingTopology implements Topology<String> {
                 .toArray(String[]::new);
     }
 
-    private static class MD5Hash {
-        MessageDigest instance;
+    long hash(final byte[] key) throws NoSuchAlgorithmException {
+        MessageDigest instance = MessageDigest.getInstance("MD5");
+        instance.reset();
+        instance.update(key);
+        final byte[] digest = instance.digest();
 
-        MD5Hash() throws NoSuchAlgorithmException {
-            instance = MessageDigest.getInstance("MD5");
+        long h = 0;
+        for (int i = 0; i < 4; i++) {
+            h <<= 8;
+            h |= ((int) digest[i]) & 0xFF;
         }
-
-        long hash(final byte[] key) {
-            instance.reset();
-            instance.update(key);
-            final byte[] digest = instance.digest();
-
-            long h = 0;
-            for (int i = 0; i < 4; i++) {
-                h <<= 8;
-                h |= ((int) digest[i]) & 0xFF;
-            }
-            return h;
-        }
+        return h;
     }
 
 }

@@ -25,6 +25,7 @@ import ru.mail.polis.service.Service;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -135,7 +136,14 @@ public class AsyncTopologyService extends HttpServer implements Service {
                         return;
                     }
                     final ByteBuffer key = getByteBufferKey(id);
-                    final String node = topology.primaryFor(key);
+                    final String node;
+                    try {
+                        node = topology.primaryFor(key);
+                    } catch (NoSuchAlgorithmException e) {
+                        logger.error("Get failed! Can`t use hash ", e);
+                        sendErrorResponse(session, Response.INTERNAL_ERROR);
+                        return;
+                    }
                     if (topology.isLocal(node)) {
                         try {
                             final byte[] result = byteBufferToByte(dao.get(key));
@@ -214,7 +222,14 @@ public class AsyncTopologyService extends HttpServer implements Service {
                         return;
                     }
                     final ByteBuffer key = getByteBufferKey(id);
-                    final String node = topology.primaryFor(key);
+                    final String node;
+                    try {
+                        node = topology.primaryFor(key);
+                    } catch (NoSuchAlgorithmException e) {
+                        logger.error("Put failed! Can`t use hash ", e);
+                        sendErrorResponse(session, Response.INTERNAL_ERROR);
+                        return;
+                    }
                     if (topology.isLocal(node)) {
                         try {
                             dao.upsert(key,
@@ -259,7 +274,14 @@ public class AsyncTopologyService extends HttpServer implements Service {
                         return;
                     }
                     final ByteBuffer key = getByteBufferKey(id);
-                    final String node = topology.primaryFor(key);
+                    final String node;
+                    try {
+                        node = topology.primaryFor(key);
+                    } catch (NoSuchAlgorithmException e) {
+                        logger.error("Delete failed! Can`t use hash ", e);
+                        sendErrorResponse(session, Response.INTERNAL_ERROR);
+                        return;
+                    }
                     if (topology.isLocal(node)) {
                         try {
                             dao.remove(getByteBufferKey(id));
