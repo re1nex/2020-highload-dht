@@ -32,7 +32,7 @@ public class ConsistentHashingTopology implements Topology<String> {
         for (final String node : nodes) {
             for (int i = 0; i < NUM_VIRTUAL_NODES; i++) {
                 final String newHash = node + i;
-                map.put(hash(newHash.getBytes(UTF_8)), node);
+                map.put(calculateHash(newHash.getBytes(UTF_8)), node);
             }
         }
     }
@@ -46,7 +46,7 @@ public class ConsistentHashingTopology implements Topology<String> {
     @Override
     public String primaryFor(@NotNull final ByteBuffer key) throws NoSuchAlgorithmException {
         final byte[] keyByte = new byte[key.remaining()];
-        long hash = hash(keyByte);
+        long hash = calculateHash(keyByte);
         final SortedMap<Long, String> tailMap = map.tailMap(hash);
         hash = tailMap.isEmpty() ? map.firstKey() : tailMap.firstKey();
         return map.get(hash);
@@ -66,8 +66,8 @@ public class ConsistentHashingTopology implements Topology<String> {
                 .toArray(String[]::new);
     }
 
-    long hash(final byte[] key) throws NoSuchAlgorithmException {
-        MessageDigest instance = MessageDigest.getInstance("MD5");
+    long calculateHash(final byte[] key) throws NoSuchAlgorithmException {
+        final MessageDigest instance = MessageDigest.getInstance("MD5");
         instance.reset();
         instance.update(key);
         final byte[] digest = instance.digest();
