@@ -18,6 +18,8 @@ public class ConsistentHashingTopology implements Topology<String> {
     private final String local;
     @NotNull
     private final SortedMap<Long, String> map = new TreeMap<>();
+    @NotNull
+    private final MD5Hash md5Hash = new MD5Hash();
 
     /**
      * Provides topology by consistent hashing.
@@ -32,7 +34,7 @@ public class ConsistentHashingTopology implements Topology<String> {
         for (final String node : nodes) {
             for (int i = 0; i < NUM_VIRTUAL_NODES; i++) {
                 final String newHash = node + i;
-                final long hash = calculateHash(newHash.getBytes(UTF_8));
+                final long hash = md5Hash.calculateHash(newHash.getBytes(UTF_8));
                 map.put(hash, node);
             }
         }
@@ -47,7 +49,7 @@ public class ConsistentHashingTopology implements Topology<String> {
     @Override
     public String primaryFor(@NotNull final ByteBuffer key) throws NoSuchAlgorithmException {
         final byte[] keyByte = new byte[key.remaining()];
-        long hash = calculateHash(keyByte);
+        long hash = md5Hash.calculateHash(keyByte);
         final SortedMap<Long, String> tailMap = map.tailMap(hash);
         hash = tailMap.isEmpty() ? map.firstKey() : tailMap.firstKey();
         return map.get(hash);
@@ -67,18 +69,20 @@ public class ConsistentHashingTopology implements Topology<String> {
                 .toArray(String[]::new);
     }
 
-    long calculateHash(final byte[] key) throws NoSuchAlgorithmException {
-        final MessageDigest instance = MessageDigest.getInstance("MD5");
-        instance.reset();
-        instance.update(key);
-        final byte[] digest = instance.digest();
+    private static class MD5Hash {
 
-        long h = 0;
-        for (int i = 0; i < 4; i++) {
-            h <<= 8;
-            h |= ((int) digest[i]) & 0xFF;
+        long calculateHash(final byte[] key) throws NoSuchAlgorithmException {
+            final MessageDigest instance = MessageDigest.getInstance("MD5");
+            instance.reset();
+            instance.update(key);
+            final byte[] digest = instance.digest();
+
+            long h = 0;
+            for (int i = 0; i < 4; i++) {
+                h <<= 8;
+                h |= ((int) digest[i]) & 0xFF;
+            }
+            return h;
         }
-        return h;
     }
-
 }
