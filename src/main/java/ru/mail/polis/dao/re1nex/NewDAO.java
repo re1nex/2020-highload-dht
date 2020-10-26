@@ -87,7 +87,8 @@ public class NewDAO implements DAO {
         }
     }
 
-    private Iterator<Cell> cellIterator(@NotNull final ByteBuffer from) throws IOException {
+    @Override
+    public Iterator<Cell> cellIterator(@NotNull final ByteBuffer from) throws IOException {
         final TableSet snapshot;
         lock.readLock().lock();
         try {

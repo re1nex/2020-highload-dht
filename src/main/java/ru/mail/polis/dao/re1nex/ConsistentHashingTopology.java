@@ -6,8 +6,12 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -20,6 +24,7 @@ public class ConsistentHashingTopology implements Topology<String> {
     private final SortedMap<Long, String> map = new TreeMap<>();
     @NotNull
     private final MD5Hash md5Hash = new MD5Hash();
+    private final int uniqueSize;
 
     /**
      * Provides topology by consistent hashing.
@@ -38,11 +43,22 @@ public class ConsistentHashingTopology implements Topology<String> {
                 map.put(hash, node);
             }
         }
+        uniqueSize = nodes.size();
     }
 
     @Override
     public boolean isLocal(@NotNull final String node) {
         return node.equals(local);
+    }
+
+    @Override
+    public boolean removeLocal(@NotNull Set<String> nodes) {
+        return nodes.remove(local);
+    }
+
+    @Override
+    public int getUniqueSize() {
+        return uniqueSize;
     }
 
     @NotNull
@@ -67,6 +83,29 @@ public class ConsistentHashingTopology implements Topology<String> {
                 .stream()
                 .distinct()
                 .toArray(String[]::new);
+    }
+
+    @NotNull
+    @Override
+    public Set<String> severalNodesForKey(@NotNull ByteBuffer key, int numNodes) throws NoSuchAlgorithmException {
+        final byte[] keyByte = new byte[key.remaining()];
+        long hash = md5Hash.calculateHash(keyByte);
+        final SortedMap<Long, String> tailMap = map.tailMap(hash);
+        final SortedSet<String> nodes = new TreeSet<>();
+        getNodesFromMap(tailMap, nodes, numNodes);
+        getNodesFromMap(map, nodes, numNodes);
+        return nodes;
+    }
+
+    private void getNodesFromMap(@NotNull final Map<Long, String> src,
+                                 @NotNull final Set<String> dst,
+                                 final int numNodes) {
+        for (final String item : src.values()) {
+            dst.add(item);
+            if (dst.size() == numNodes) {
+                return;
+            }
+        }
     }
 
     private static class MD5Hash {

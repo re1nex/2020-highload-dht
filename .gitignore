@@ -5,9 +5,8 @@
 !.gitignore
 !*.java
 !*.txt
-!*.svg
 !*.png
-!*.md
+!README.md
 !*.lua
 !LICENSE
 !*.txt

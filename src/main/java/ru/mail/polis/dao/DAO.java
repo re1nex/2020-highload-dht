@@ -19,6 +19,8 @@ package ru.mail.polis.dao;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.mail.polis.Record;
+import ru.mail.polis.dao.re1nex.Cell;
+import ru.mail.polis.dao.re1nex.Value;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -84,6 +86,19 @@ public interface DAO extends Closeable {
             throw new NoSuchElementException("Not found");
         }
     }
+
+    @NotNull
+    default Value getValue(@NotNull ByteBuffer key) throws IOException, NoSuchElementException {
+        final Iterator<Cell> iter = cellIterator(key);
+        if (!iter.hasNext()) {
+            throw new NoSuchElementException("Not found");
+        }
+
+        return iter.next().getValue();
+    }
+
+    @NotNull
+    Iterator<Cell> cellIterator(@NotNull ByteBuffer from) throws IOException;
 
     /**
      * Inserts or updates value by given key.

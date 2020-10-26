@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.dao.DAO;
 import ru.mail.polis.dao.re1nex.ConsistentHashingTopology;
 import ru.mail.polis.dao.re1nex.Topology;
+import ru.mail.polis.service.re1nex.AsyncTopologyReplicaService;
 import ru.mail.polis.service.re1nex.AsyncTopologyService;
 
 import java.io.IOException;
@@ -65,7 +66,7 @@ public final class ServiceFactory {
         } catch (NoSuchAlgorithmException e) {
             throw new IOException(e);
         }
-        return new AsyncTopologyService(port,
+        return new AsyncTopologyReplicaService(port,
                 dao,
                 Runtime.getRuntime().availableProcessors(),
                 16,
