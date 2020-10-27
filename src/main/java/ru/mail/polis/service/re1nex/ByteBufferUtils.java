@@ -7,9 +7,9 @@ import java.nio.charset.StandardCharsets;
 
 public class ByteBufferUtils {
     @NotNull
-    private final byte[] emptyArray = new byte[0];
+    private static final byte[] emptyArray = new byte[0];
 
-    byte[] byteBufferToByte(@NotNull final ByteBuffer result) {
+    static byte[] byteBufferToByte(@NotNull final ByteBuffer result) {
         if (result.hasRemaining()) {
             final byte[] resultByteArray = new byte[result.remaining()];
             result.get(resultByteArray);
@@ -20,7 +20,7 @@ public class ByteBufferUtils {
     }
 
     @NotNull
-    ByteBuffer getByteBufferKey(@NotNull final String id) {
+    static ByteBuffer getByteBufferKey(@NotNull final String id) {
         return ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
     }
 
