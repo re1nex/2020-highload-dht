@@ -12,9 +12,12 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 
-public class ApiUtils {
+final class ApiUtils {
     @NonNull
     private static final String RESPONSE_ERROR = "Can't send response error";
+
+    private ApiUtils() {
+    }
 
     static void sendResponse(@NotNull final HttpSession session,
                              @NotNull final Response response,
