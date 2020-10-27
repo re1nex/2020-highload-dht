@@ -22,8 +22,7 @@ public class ConsistentHashingTopology implements Topology<String> {
     private final String local;
     @NotNull
     private final SortedMap<Long, String> map = new TreeMap<>();
-    @NotNull
-    private final MD5Hash md5Hash = new MD5Hash();
+
     private final int uniqueSize;
 
     /**
@@ -39,7 +38,10 @@ public class ConsistentHashingTopology implements Topology<String> {
         for (final String node : nodes) {
             for (int i = 0; i < NUM_VIRTUAL_NODES; i++) {
                 final String newHash = node + i;
-                final long hash = md5Hash.calculateHash(newHash.getBytes(UTF_8));
+                final long hash = calculateHash(newHash.getBytes(UTF_8));
+                if (map.containsKey(hash)) {
+                    throw new NoSuchAlgorithmException("Hash table already contains this key!");
+                }
                 map.put(hash, node);
             }
         }
@@ -52,7 +54,7 @@ public class ConsistentHashingTopology implements Topology<String> {
     }
 
     @Override
-    public boolean removeLocal(@NotNull Set<String> nodes) {
+    public boolean removeLocal(@NotNull final Set<String> nodes) {
         return nodes.remove(local);
     }
 
@@ -65,7 +67,7 @@ public class ConsistentHashingTopology implements Topology<String> {
     @Override
     public String primaryFor(@NotNull final ByteBuffer key) throws NoSuchAlgorithmException {
         final byte[] keyByte = new byte[key.remaining()];
-        long hash = md5Hash.calculateHash(keyByte);
+        long hash = calculateHash(keyByte);
         final SortedMap<Long, String> tailMap = map.tailMap(hash);
         hash = tailMap.isEmpty() ? map.firstKey() : tailMap.firstKey();
         return map.get(hash);
@@ -87,9 +89,10 @@ public class ConsistentHashingTopology implements Topology<String> {
 
     @NotNull
     @Override
-    public Set<String> severalNodesForKey(@NotNull ByteBuffer key, int numNodes) throws NoSuchAlgorithmException {
+    public Set<String> severalNodesForKey(@NotNull final ByteBuffer key,
+                                          final int numNodes) throws NoSuchAlgorithmException {
         final byte[] keyByte = new byte[key.remaining()];
-        long hash = md5Hash.calculateHash(keyByte);
+        final long hash = calculateHash(keyByte);
         final SortedMap<Long, String> tailMap = map.tailMap(hash);
         final SortedSet<String> nodes = new TreeSet<>();
         getNodesFromMap(tailMap, nodes, numNodes);
@@ -108,20 +111,18 @@ public class ConsistentHashingTopology implements Topology<String> {
         }
     }
 
-    private static class MD5Hash {
 
-        long calculateHash(final byte[] key) throws NoSuchAlgorithmException {
-            final MessageDigest instance = MessageDigest.getInstance("MD5");
-            instance.reset();
-            instance.update(key);
-            final byte[] digest = instance.digest();
+    private static long calculateHash(final byte[] key) throws NoSuchAlgorithmException {
+        final MessageDigest instance = MessageDigest.getInstance("MD5");
+        instance.update(key);
+        final byte[] digest = instance.digest();
 
-            long h = 0;
-            for (int i = 0; i < 4; i++) {
-                h <<= 8;
-                h |= ((int) digest[i]) & 0xFF;
-            }
-            return h;
+        long h = 0;
+        for (int i = 0; i < 4; i++) {
+            h <<= 8;
+            h |= ((int) digest[i]) & 0xFF;
         }
+        return h;
     }
+
 }

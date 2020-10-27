@@ -1,30 +1,30 @@
-package ru.mail.polis.dao.re1nex;
+package ru.mail.polis.service.re1nex;
 
 import com.google.common.base.Splitter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ReplicaInfo {
+class ReplicaInfo {
     private final int ack;
     private final int from;
 
-    public ReplicaInfo(final int ack, final int from) {
+    ReplicaInfo(final int ack, final int from) {
         this.ack = ack;
         this.from = from;
     }
 
-    public int getAck() {
+    int getAck() {
         return ack;
     }
 
-    public int getFrom() {
+    int getFrom() {
         return from;
     }
 
     @NotNull
-    public static ReplicaInfo of(@NotNull final String replica) {
-        List<String> values = Splitter.on('/').splitToList(replica);
+    static ReplicaInfo of(@NotNull final String replica) {
+        final List<String> values = Splitter.on('/').splitToList(replica);
         if (values.size() != 2) {
             throw new IllegalArgumentException("Not enough args");
         }

@@ -87,6 +87,11 @@ public interface DAO extends Closeable {
         }
     }
 
+    /**
+     * Obtains {@link Value} corresponding to given key.
+     *
+     * @throws NoSuchElementException if no such record
+     */
     @NotNull
     default Value getValue(@NotNull ByteBuffer key) throws IOException, NoSuchElementException {
         final Iterator<Cell> iter = cellIterator(key);

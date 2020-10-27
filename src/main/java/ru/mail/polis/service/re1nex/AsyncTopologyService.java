@@ -2,7 +2,6 @@ package ru.mail.polis.service.re1nex;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import one.nio.http.HttpClient;
-import one.nio.http.HttpServer;
 import one.nio.http.HttpServerConfig;
 import one.nio.http.HttpSession;
 import one.nio.http.Param;
@@ -17,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.mail.polis.dao.DAO;
 import ru.mail.polis.dao.re1nex.Topology;
-import ru.mail.polis.service.Service;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -31,21 +29,13 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class AsyncTopologyService extends HttpServer implements Service {
+public class AsyncTopologyService extends BaseAsyncService {
     @NotNull
     private static final Logger logger = LoggerFactory.getLogger(AsyncTopologyService.class);
     @NotNull
-    private final ByteBufferUtils byteBufferUtils;
-    @NotNull
     private final DAO dao;
     @NotNull
-    private final ApiUtils apiUtils;
-    @NotNull
-    private final ExecutorService executor;
-    @NotNull
     private final Topology<String> topology;
-    @NotNull
-    private final Map<String, HttpClient> nodeToClient;
 
     /**
      * Service for concurrent work with requests.
@@ -60,59 +50,9 @@ public class AsyncTopologyService extends HttpServer implements Service {
                                 final int workersCount,
                                 final int queueSize,
                                 @NotNull final Topology<String> topology) throws IOException {
-        super(provideConfig(port));
-        assert workersCount > 0;
-        assert queueSize > 0;
+        super(port, dao, workersCount, queueSize, topology, logger);
         this.dao = dao;
         this.topology = topology;
-        this.nodeToClient = new HashMap<>();
-        this.byteBufferUtils = new ByteBufferUtils();
-        this.apiUtils = new ApiUtils(dao, topology, nodeToClient, logger);
-        for (final String node : topology.all()) {
-            if (!topology.isLocal(node)) {
-                final HttpClient client = new HttpClient(new ConnectionString(node + "?timeout=1000"));
-                if (nodeToClient.put(node, client) != null) {
-                    throw new IllegalStateException("Duplicate node");
-                }
-            }
-        }
-        this.executor = new ThreadPoolExecutor(
-                workersCount,
-                workersCount,
-                0L,
-                TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(queueSize),
-                new ThreadFactoryBuilder()
-                        .setUncaughtExceptionHandler((t, e) -> logger.error("Error {} in thread {}", e, t))
-                        .setNameFormat("worker_%d")
-                        .build(),
-                new ThreadPoolExecutor.AbortPolicy()
-        );
-    }
-
-    private static HttpServerConfig provideConfig(final int port) {
-        final AcceptorConfig acceptorConfig = new AcceptorConfig();
-        acceptorConfig.port = port;
-        final HttpServerConfig httpServerConfig = new HttpServerConfig();
-        httpServerConfig.acceptors = new AcceptorConfig[]{acceptorConfig};
-        return httpServerConfig;
-    }
-
-    /**
-     * Provide service status.
-     *
-     * @return Response - status
-     */
-    @Path("/v0/status")
-    public Response status() {
-        return Response.ok(Response.OK);
-    }
-
-    @Override
-    public void handleDefault(final Request request, final HttpSession session) throws IOException {
-        logger.info("Unsupported mapping request.\n Cannot understand it: {} {}",
-                request.getMethodName(), request.getPath());
-        session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
     }
 
     /**
@@ -130,22 +70,22 @@ public class AsyncTopologyService extends HttpServer implements Service {
         executeTask(() -> {
                     if (id.isEmpty()) {
                         logger.info("GET failed! Id is empty!");
-                        apiUtils.sendErrorResponse(session, Response.BAD_REQUEST);
+                        apiController.sendErrorResponse(session, Response.BAD_REQUEST);
                         return;
                     }
-                    final ByteBuffer key = byteBufferUtils.getByteBufferKey(id);
+                    final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
                     final String node;
                     try {
                         node = topology.primaryFor(key);
                     } catch (NoSuchAlgorithmException e) {
                         logger.error("Get failed! Can`t use hash ", e);
-                        apiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR);
+                        apiController.sendErrorResponse(session, Response.INTERNAL_ERROR);
                         return;
                     }
                     if (topology.isLocal(node)) {
                         getFromNode(session, key, id);
                     } else {
-                        apiUtils.proxy(node,
+                        apiController.proxy(node,
                                 request,
                                 session,
                                 nodeToClient.get(node));
@@ -158,18 +98,18 @@ public class AsyncTopologyService extends HttpServer implements Service {
                              @NotNull final ByteBuffer key,
                              @NotNull final String id) {
         try {
-            final byte[] result = byteBufferUtils.byteBufferToByte(dao.get(key));
+            final byte[] result = ByteBufferUtils.byteBufferToByte(dao.get(key));
             if (result.length > 0) {
-                apiUtils.sendResponse(session, new Response(Response.OK, result));
+                apiController.sendResponse(session, new Response(Response.OK, result));
             } else {
-                apiUtils.sendResponse(session, new Response(Response.OK, Response.EMPTY));
+                apiController.sendResponse(session, new Response(Response.OK, Response.EMPTY));
             }
         } catch (IOException e) {
             logger.error("GET element " + id, e);
-            apiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR);
+            apiController.sendErrorResponse(session, Response.INTERNAL_ERROR);
         } catch (NoSuchElementException exception) {
             logger.info("GET failed! no element " + id, exception);
-            apiUtils.sendErrorResponse(session, Response.NOT_FOUND);
+            apiController.sendErrorResponse(session, Response.NOT_FOUND);
         }
     }
 
@@ -189,30 +129,30 @@ public class AsyncTopologyService extends HttpServer implements Service {
         executeTask(() -> {
                     if (id.isEmpty()) {
                         logger.info("PUT failed! Id is empty!");
-                        apiUtils.sendErrorResponse(session, Response.BAD_REQUEST);
+                        apiController.sendErrorResponse(session, Response.BAD_REQUEST);
                         return;
                     }
-                    final ByteBuffer key = byteBufferUtils.getByteBufferKey(id);
+                    final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
                     final String node;
                     try {
                         node = topology.primaryFor(key);
                     } catch (NoSuchAlgorithmException e) {
                         logger.error("Put failed! Can`t use hash ", e);
-                        apiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR);
+                        apiController.sendErrorResponse(session, Response.INTERNAL_ERROR);
                         return;
                     }
                     if (topology.isLocal(node)) {
                         try {
                             dao.upsert(key,
                                     ByteBuffer.wrap(request.getBody()));
-                            apiUtils.sendResponse(session, new Response(Response.CREATED, Response.EMPTY));
+                            apiController.sendResponse(session, new Response(Response.CREATED, Response.EMPTY));
                         } catch (IOException e) {
                             logger.error("PUT failed! Cannot put the element: {}. Request: {}. Cause: {}",
                                     id, request.getBody(), e.getCause());
-                            apiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR);
+                            apiController.sendErrorResponse(session, Response.INTERNAL_ERROR);
                         }
                     } else {
-                        apiUtils.proxy(node,
+                        apiController.proxy(node,
                                 request,
                                 session,
                                 nodeToClient.get(node));
@@ -236,58 +176,34 @@ public class AsyncTopologyService extends HttpServer implements Service {
         executeTask(() -> {
                     if (id.isEmpty()) {
                         logger.info("DELETE failed! Id is empty!");
-                        apiUtils.sendErrorResponse(session, Response.BAD_REQUEST);
+                        apiController.sendErrorResponse(session, Response.BAD_REQUEST);
                         return;
                     }
-                    final ByteBuffer key = byteBufferUtils.getByteBufferKey(id);
+                    final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
                     final String node;
                     try {
                         node = topology.primaryFor(key);
                     } catch (NoSuchAlgorithmException e) {
                         logger.error("Delete failed! Can`t use hash ", e);
-                        apiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR);
+                        apiController.sendErrorResponse(session, Response.INTERNAL_ERROR);
                         return;
                     }
                     if (topology.isLocal(node)) {
                         try {
-                            dao.remove(byteBufferUtils.getByteBufferKey(id));
-                            apiUtils.sendResponse(session, new Response(Response.ACCEPTED, Response.EMPTY));
+                            dao.remove(ByteBufferUtils.getByteBufferKey(id));
+                            apiController.sendResponse(session, new Response(Response.ACCEPTED, Response.EMPTY));
                         } catch (IOException e) {
                             logger.error("DELETE failed! Cannot get the element {}.\n Error: {}",
                                     id, e.getMessage(), e);
-                            apiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR);
+                            apiController.sendErrorResponse(session, Response.INTERNAL_ERROR);
                         }
                     } else {
-                        apiUtils.proxy(node,
+                        apiController.proxy(node,
                                 request,
                                 session,
                                 nodeToClient.get(node));
                     }
                 },
                 session);
-    }
-
-    @Override
-    public synchronized void stop() {
-        super.stop();
-        executor.shutdown();
-        try {
-            executor.awaitTermination(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            logger.error("Can't shutdown execution");
-            Thread.currentThread().interrupt();
-        }
-        for (final HttpClient client : nodeToClient.values()) {
-            client.clear();
-        }
-    }
-
-    private void executeTask(final Runnable task, final HttpSession session) {
-        try {
-            executor.execute(task);
-        } catch (RejectedExecutionException e) {
-            logger.error("Execute failed!", e);
-            apiUtils.sendErrorResponse(session, Response.SERVICE_UNAVAILABLE);
-        }
     }
 }

@@ -10,7 +10,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import ru.mail.polis.dao.DAO;
-import ru.mail.polis.dao.re1nex.ReplicaInfo;
 import ru.mail.polis.dao.re1nex.Topology;
 import ru.mail.polis.dao.re1nex.Value;
 
@@ -23,21 +22,17 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-public class ApiUtils {
+class ApiController {
     @NotNull
-    public static final String NOT_ENOUGH_REPLICAS = "504 Not Enough Replicas";
+    static final String NOT_ENOUGH_REPLICAS = "504 Not Enough Replicas";
     @NonNull
     private static final String RESPONSE_ERROR = "Can't send response error";
     @NotNull
-    public static final String GENERATION = "generation";
+    static final String GENERATION = "generation";
     @NotNull
-    public static final String TOMBSTONE = "tombstone";
+    static final String TOMBSTONE = "tombstone";
     @NotNull
-    public static final String PROXY = "X-Proxy-For: ";
-    @NotNull
-    private final ByteBufferUtils byteBufferUtils;
-    @NotNull
-    private final MergeUtils mergeUtils;
+    static final String PROXY = "X-Proxy-For: ";
     @NotNull
     private final DAO dao;
     @NotNull
@@ -47,16 +42,14 @@ public class ApiUtils {
     @NotNull
     private final Logger logger;
 
-    public ApiUtils(@NotNull final DAO dao,
-                    @NotNull final Topology<String> topology,
-                    @NotNull final Map<String, HttpClient> nodeToClient,
-                    @NotNull final Logger logger) {
+    ApiController(@NotNull final DAO dao,
+                  @NotNull final Topology<String> topology,
+                  @NotNull final Map<String, HttpClient> nodeToClient,
+                  @NotNull final Logger logger) {
         this.dao = dao;
         this.topology = topology;
         this.nodeToClient = nodeToClient;
         this.logger = logger;
-        this.mergeUtils = new MergeUtils();
-        this.byteBufferUtils = new ByteBufferUtils();
     }
 
     void sendResponse(@NotNull final HttpSession session,
@@ -93,17 +86,17 @@ public class ApiUtils {
 
     private Response get(@NotNull final String id) {
         try {
-            final ByteBuffer key = byteBufferUtils.getByteBufferKey(id);
+            final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
             final Value value = dao.getValue(key);
             final Response response;
             if (value.isTombstone()) {
                 response = new Response(Response.OK, Response.EMPTY);
             } else {
-                response = new Response(Response.OK, byteBufferUtils.byteBufferToByte(value.getData()));
+                response = new Response(Response.OK, ByteBufferUtils.byteBufferToByte(value.getData()));
             }
-            response.addHeader(ApiUtils.GENERATION + value.getTimestamp());
+            response.addHeader(ApiController.GENERATION + value.getTimestamp());
             if (value.isTombstone()) {
-                response.addHeader(ApiUtils.TOMBSTONE);
+                response.addHeader(ApiController.TOMBSTONE);
             }
             return response;
         } catch (NoSuchElementException e) {
@@ -115,9 +108,9 @@ public class ApiUtils {
     }
 
     private Response put(@NotNull final String id,
-                 @NotNull final Request request) {
+                         @NotNull final Request request) {
         try {
-            dao.upsert(byteBufferUtils.getByteBufferKey(id), ByteBuffer.wrap(request.getBody()));
+            dao.upsert(ByteBufferUtils.getByteBufferKey(id), ByteBuffer.wrap(request.getBody()));
             return new Response(Response.CREATED, Response.EMPTY);
         } catch (IOException e) {
             logger.error("PUT failed! Cannot put the element: {}. Request: {}. Cause: {}",
@@ -128,7 +121,7 @@ public class ApiUtils {
 
     private Response delete(@NotNull final String id) {
         try {
-            dao.remove(byteBufferUtils.getByteBufferKey(id));
+            dao.remove(ByteBufferUtils.getByteBufferKey(id));
             return new Response(Response.ACCEPTED, Response.EMPTY);
         } catch (IOException e) {
             logger.error("DELETE failed! Cannot get the element {}.\n Error: {}",
@@ -150,12 +143,14 @@ public class ApiUtils {
             case Request.METHOD_DELETE:
                 sendResponse(session, delete(id));
                 break;
+            default:
+                break;
         }
     }
 
     @NotNull
     private Response proxy(@NotNull final String node,
-                   @NotNull final Request request) {
+                           @NotNull final Request request) {
         try {
             return nodeToClient.get(node).invoke(request);
         } catch (IOException | InterruptedException | HttpException | PoolException e) {
@@ -164,14 +159,13 @@ public class ApiUtils {
         }
     }
 
-    public void sendReplica(@NotNull final String id,
-                            @NotNull final ReplicaInfo replicaInfo,
-                            @NotNull final HttpSession session,
-                            @NotNull final Request request) {
-        request.addHeader(ApiUtils.PROXY);
-        final int ack = replicaInfo.getAck();
+    void sendReplica(@NotNull final String id,
+                     @NotNull final ReplicaInfo replicaInfo,
+                     @NotNull final HttpSession session,
+                     @NotNull final Request request) {
+        request.addHeader(ApiController.PROXY);
         final int from = replicaInfo.getFrom();
-        final ByteBuffer key = byteBufferUtils.getByteBufferKey(id);
+        final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
         final Set<String> nodes;
         try {
             nodes = topology.severalNodesForKey(key, from);
@@ -180,35 +174,47 @@ public class ApiUtils {
             sendResponse(session, new Response(Response.INTERNAL_ERROR, Response.EMPTY));
             return;
         }
-        List<Response> responses = new ArrayList<>();
+        final List<Response> responses = new ArrayList<>();
+        final int ack = replicaInfo.getAck();
         switch (request.getMethod()) {
             case Request.METHOD_GET:
-                if (topology.removeLocal(nodes)) {
-                    responses.add(get(id));
-                }
-                for (final String node : nodes) {
-                    responses.add(proxy(node, request));
-                }
-                sendResponse(session, mergeUtils.mergeGetResponses(responses, ack));
+                handleResponses(nodes,
+                        responses,
+                        request,
+                        get(id));
+                sendResponse(session,
+                        MergeUtils.mergeGetResponses(responses, ack));
                 break;
             case Request.METHOD_DELETE:
-                if (topology.removeLocal(nodes)) {
-                    responses.add(delete(id));
-                }
-                for (final String node : nodes) {
-                    responses.add(proxy(node, request));
-                }
-                sendResponse(session, mergeUtils.mergeDeleteResponses(responses, ack));
+                handleResponses(nodes,
+                        responses,
+                        request,
+                        delete(id));
+                sendResponse(session,
+                        MergeUtils.mergePutDeleteResponses(responses, ack, false));
                 break;
             case Request.METHOD_PUT:
-                if (topology.removeLocal(nodes)) {
-                    responses.add(put(id, request));
-                }
-                for (final String node : nodes) {
-                    responses.add(proxy(node, request));
-                }
-                sendResponse(session, mergeUtils.mergePutResponses(responses, ack));
+                handleResponses(nodes,
+                        responses,
+                        request,
+                        put(id, request));
+                sendResponse(session,
+                        MergeUtils.mergePutDeleteResponses(responses, ack, true));
                 break;
+            default:
+                break;
+        }
+    }
+
+    private void handleResponses(@NotNull final Set<String> nodes,
+                                 @NotNull final List<Response> responses,
+                                 @NotNull final Request request,
+                                 @NotNull final Response response) {
+        if (topology.removeLocal(nodes)) {
+            responses.add(response);
+        }
+        for (final String node : nodes) {
+            responses.add(proxy(node, request));
         }
     }
 }
