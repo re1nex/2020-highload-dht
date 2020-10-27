@@ -88,6 +88,7 @@ abstract class BaseAsyncService extends HttpServer implements Service {
         return Response.ok(Response.OK);
     }
 
+    @Override
     public void handleDefault(final Request request,
                               final HttpSession session) throws IOException {
         logger.info("Unsupported mapping request.\n Cannot understand it: {} {}",
