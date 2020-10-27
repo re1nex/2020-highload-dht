@@ -32,7 +32,7 @@ class ApiController {
     @NotNull
     static final String TOMBSTONE = "tombstone";
     @NotNull
-    static final String PROXY = "X-Proxy-For: ";
+    static final String PROXY_FOR = "X-Proxy-For: ";
     @NotNull
     private final DAO dao;
     @NotNull
@@ -61,13 +61,24 @@ class ApiController {
         }
     }
 
+    @NotNull
+    private Response proxy(@NotNull final String node,
+                           @NotNull final Request request) {
+        try {
+            return nodeToClient.get(node).invoke(request);
+        } catch (IOException | InterruptedException | HttpException | PoolException e) {
+            logger.error(RESPONSE_ERROR, e);
+            return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
+        }
+    }
+
     void proxy(
             @NotNull final String node,
             @NotNull final Request request,
             @NotNull final HttpSession session,
             @NotNull final HttpClient client) {
         try {
-            request.addHeader(PROXY + node);
+            request.addHeader(PROXY_FOR + node);
             session.sendResponse(client.invoke(request));
         } catch (IOException | InterruptedException | PoolException | HttpException e) {
             logger.error(RESPONSE_ERROR, e);
@@ -148,22 +159,11 @@ class ApiController {
         }
     }
 
-    @NotNull
-    private Response proxy(@NotNull final String node,
-                           @NotNull final Request request) {
-        try {
-            return nodeToClient.get(node).invoke(request);
-        } catch (IOException | InterruptedException | HttpException | PoolException e) {
-            logger.error(RESPONSE_ERROR, e);
-            return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
-        }
-    }
-
     void sendReplica(@NotNull final String id,
                      @NotNull final ReplicaInfo replicaInfo,
                      @NotNull final HttpSession session,
                      @NotNull final Request request) {
-        request.addHeader(ApiController.PROXY);
+        request.addHeader(ApiController.PROXY_FOR);
         final int from = replicaInfo.getFrom();
         final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
         final Set<String> nodes;

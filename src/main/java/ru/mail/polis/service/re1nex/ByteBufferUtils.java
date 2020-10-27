@@ -9,6 +9,9 @@ public class ByteBufferUtils {
     @NotNull
     private static final byte[] emptyArray = new byte[0];
 
+    private ByteBufferUtils() {
+    }
+
     static byte[] byteBufferToByte(@NotNull final ByteBuffer result) {
         if (result.hasRemaining()) {
             final byte[] resultByteArray = new byte[result.remaining()];

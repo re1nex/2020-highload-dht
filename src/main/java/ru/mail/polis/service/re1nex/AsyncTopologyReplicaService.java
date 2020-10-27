@@ -54,7 +54,7 @@ public class AsyncTopologyReplicaService extends BaseAsyncService {
                 apiController.sendErrorResponse(session, Response.BAD_REQUEST);
                 return;
             }
-            if (request.getHeader(ApiController.PROXY) == null) {
+            if (request.getHeader(ApiController.PROXY_FOR) == null) {
                 final ReplicaInfo replicaInfo;
                 if (replicas == null) {
                     replicaInfo = defaultReplicaInfo;

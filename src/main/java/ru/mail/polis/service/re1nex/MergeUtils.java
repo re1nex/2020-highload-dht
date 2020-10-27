@@ -7,6 +7,9 @@ import java.util.List;
 
 public class MergeUtils {
 
+    private MergeUtils() {
+    }
+
     static Response mergeGetResponses(@NotNull final List<Response> responses, final int ack) {
         int numResponses = 0;
         int numNotFoundResponses = 0;
@@ -43,7 +46,7 @@ public class MergeUtils {
                                             final int ack,
                                             final boolean isPut) {
         int numResponses = 0;
-        int statusOk = isPut ? 201 : 202;
+        final int statusOk = isPut ? 201 : 202;
         for (final Response response : responses) {
             if (response.getStatus() == statusOk) {
                 numResponses++;
