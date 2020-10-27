@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" width="1200" height="374" onload="init(evt)" viewBox="0 0 1200 374" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg version="1.1" width="1200" height="502" onload="init(evt)" viewBox="0 0 1200 502" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <style type="text/css">
 	text { font-family:Verdana; font-size:12px; fill:rgb(0,0,0); }
 	#search { opacity:0.1; cursor:pointer; }
@@ -328,178 +328,346 @@
 </script>
 <rect x="0" y="0" width="100%" height="100%" fill="rgb(240,240,220)"/>
 <text id="title" x="600" y="24">Flame Graph</text>
-<text id="details" x="10" y="357"> </text>
+<text id="details" x="10" y="485"> </text>
 <text id="unzoom" x="10" y="24" class="hide">Reset Zoom</text>
 <text id="search" x="1090" y="24">Search</text>
-<text id="matched" x="1090" y="357"> </text>
+<text id="matched" x="1090" y="485"> </text>
 <g id="frames">
 <g>
-<title>all (1,328 samples, 100.00%)</title><rect x="10.0" y="323.0" width="1180.0" height="15" fill="#e15a5a" rx="2" ry="2"/>
-<text x="13.0" y="334.0">all</text>
+<title>all (2,202 samples, 100.00%)</title><rect x="10.0" y="451.0" width="1180.0" height="15" fill="#e76363" rx="2" ry="2"/>
+<text x="13.0" y="462.0">all</text>
 </g>
 <g>
-<title>java/lang/Thread.run (683 samples, 51.43%)</title><rect x="10.0" y="307.0" width="606.9" height="15" fill="#68f968" rx="2" ry="2"/>
-<text x="13.0" y="318.0">java/lang/Thread.run</text>
+<title>java/lang/Thread.run (1,225 samples, 55.63%)</title><rect x="10.0" y="435.0" width="656.4" height="15" fill="#54e554" rx="2" ry="2"/>
+<text x="13.0" y="446.0">java/lang/Thread.run</text>
 </g>
 <g>
-<title>java/util/concurrent/ThreadPoolExecutor$Worker.run (683 samples, 51.43%)</title><rect x="10.0" y="291.0" width="606.9" height="15" fill="#5eef5e" rx="2" ry="2"/>
-<text x="13.0" y="302.0">java/util/concurrent/ThreadPoolExecutor$Worker.run</text>
+<title>java/util/concurrent/ThreadPoolExecutor$Worker.run (1,225 samples, 55.63%)</title><rect x="10.0" y="419.0" width="656.4" height="15" fill="#5ced5c" rx="2" ry="2"/>
+<text x="13.0" y="430.0">java/util/concurrent/ThreadPoolExecutor$Worker.run</text>
 </g>
 <g>
-<title>java/util/concurrent/ThreadPoolExecutor.runWorker (683 samples, 51.43%)</title><rect x="10.0" y="275.0" width="606.9" height="15" fill="#5ff05f" rx="2" ry="2"/>
-<text x="13.0" y="286.0">java/util/concurrent/ThreadPoolExecutor.runWorker</text>
+<title>java/util/concurrent/ThreadPoolExecutor.runWorker (1,225 samples, 55.63%)</title><rect x="10.0" y="403.0" width="656.4" height="15" fill="#61f261" rx="2" ry="2"/>
+<text x="13.0" y="414.0">java/util/concurrent/ThreadPoolExecutor.runWorker</text>
 </g>
 <g>
-<title>java/util/concurrent/ThreadPoolExecutor.getTask (660 samples, 49.70%)</title><rect x="10.0" y="259.0" width="586.4" height="15" fill="#67f867" rx="2" ry="2"/>
-<text x="13.0" y="270.0">java/util/concurrent/ThreadPoolExecutor.getTask</text>
+<title>java/util/concurrent/ThreadPoolExecutor.getTask (1,101 samples, 50.00%)</title><rect x="10.0" y="387.0" width="590.0" height="15" fill="#5dee5d" rx="2" ry="2"/>
+<text x="13.0" y="398.0">java/util/concurrent/ThreadPoolExecutor.getTask</text>
 </g>
 <g>
-<title>java/util/concurrent/ArrayBlockingQueue.take (660 samples, 49.70%)</title><rect x="10.0" y="243.0" width="586.4" height="15" fill="#53e453" rx="2" ry="2"/>
-<text x="13.0" y="254.0">java/util/concurrent/ArrayBlockingQueue.take</text>
+<title>java/util/concurrent/ArrayBlockingQueue.take (1,101 samples, 50.00%)</title><rect x="10.0" y="371.0" width="590.0" height="15" fill="#6afb6a" rx="2" ry="2"/>
+<text x="13.0" y="382.0">java/util/concurrent/ArrayBlockingQueue.take</text>
 </g>
 <g>
-<title>java/util/concurrent/locks/AbstractQueuedSynchronizer$ConditionObject.await (193 samples, 14.53%)</title><rect x="10.0" y="227.0" width="171.5" height="15" fill="#55e655" rx="2" ry="2"/>
-<text x="13.0" y="238.0">java/util/concurrent/l..</text>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer$ConditionObject.await (337 samples, 15.30%)</title><rect x="10.0" y="355.0" width="180.6" height="15" fill="#53e453" rx="2" ry="2"/>
+<text x="13.0" y="366.0">java/util/concurrent/lo..</text>
 </g>
 <g>
-<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.acquireQueued (193 samples, 14.53%)</title><rect x="10.0" y="211.0" width="171.5" height="15" fill="#67f867" rx="2" ry="2"/>
-<text x="13.0" y="222.0">java/util/concurrent/l..</text>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.acquireQueued (337 samples, 15.30%)</title><rect x="10.0" y="339.0" width="180.6" height="15" fill="#5eef5e" rx="2" ry="2"/>
+<text x="13.0" y="350.0">java/util/concurrent/lo..</text>
 </g>
 <g>
-<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.parkAndCheckInterrupt (193 samples, 14.53%)</title><rect x="10.0" y="195.0" width="171.5" height="15" fill="#6bfc6b" rx="2" ry="2"/>
-<text x="13.0" y="206.0">java/util/concurrent/l..</text>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.parkAndCheckInterrupt (337 samples, 15.30%)</title><rect x="10.0" y="323.0" width="180.6" height="15" fill="#58e958" rx="2" ry="2"/>
+<text x="13.0" y="334.0">java/util/concurrent/lo..</text>
 </g>
 <g>
-<title>java/util/concurrent/locks/LockSupport.park (193 samples, 14.53%)</title><rect x="10.0" y="179.0" width="171.5" height="15" fill="#60f160" rx="2" ry="2"/>
-<text x="13.0" y="190.0">java/util/concurrent/l..</text>
+<title>java/util/concurrent/locks/LockSupport.park (337 samples, 15.30%)</title><rect x="10.0" y="307.0" width="180.6" height="15" fill="#6dfe6d" rx="2" ry="2"/>
+<text x="13.0" y="318.0">java/util/concurrent/lo..</text>
 </g>
 <g>
-<title>jdk/internal/misc/Unsafe.park (193 samples, 14.53%)</title><rect x="10.0" y="163.0" width="171.5" height="15" fill="#58e958" rx="2" ry="2"/>
-<text x="13.0" y="174.0">jdk/internal/misc/Unsa..</text>
+<title>jdk/internal/misc/Unsafe.park (337 samples, 15.30%)</title><rect x="10.0" y="291.0" width="180.6" height="15" fill="#58e958" rx="2" ry="2"/>
+<text x="13.0" y="302.0">jdk/internal/misc/Unsaf..</text>
 </g>
 <g>
-<title>java.util.concurrent.locks.ReentrantLock$NonfairSync (193 samples, 14.53%)</title><rect x="10.0" y="147.0" width="171.5" height="15" fill="#57c5c5" rx="2" ry="2"/>
-<text x="13.0" y="158.0">java.util.concurrent.l..</text>
+<title>java.util.concurrent.locks.ReentrantLock$NonfairSync (337 samples, 15.30%)</title><rect x="10.0" y="275.0" width="180.6" height="15" fill="#6cdada" rx="2" ry="2"/>
+<text x="13.0" y="286.0">java.util.concurrent.lo..</text>
 </g>
 <g>
-<title>java/util/concurrent/locks/ReentrantLock.lockInterruptibly (467 samples, 35.17%)</title><rect x="181.5" y="227.0" width="414.9" height="15" fill="#55e655" rx="2" ry="2"/>
-<text x="184.5" y="238.0">java/util/concurrent/locks/ReentrantLock.lockInterruptibly</text>
+<title>java/util/concurrent/locks/ReentrantLock.lockInterruptibly (764 samples, 34.70%)</title><rect x="190.6" y="355.0" width="409.4" height="15" fill="#6dfe6d" rx="2" ry="2"/>
+<text x="193.6" y="366.0">java/util/concurrent/locks/ReentrantLock.lockInterruptibly</text>
 </g>
 <g>
-<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.acquireInterruptibly (467 samples, 35.17%)</title><rect x="181.5" y="211.0" width="414.9" height="15" fill="#50e150" rx="2" ry="2"/>
-<text x="184.5" y="222.0">java/util/concurrent/locks/AbstractQueuedSynchronizer.acq..</text>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.acquireInterruptibly (764 samples, 34.70%)</title><rect x="190.6" y="339.0" width="409.4" height="15" fill="#56e756" rx="2" ry="2"/>
+<text x="193.6" y="350.0">java/util/concurrent/locks/AbstractQueuedSynchronizer.ac..</text>
 </g>
 <g>
-<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.doAcquireInterruptibly (467 samples, 35.17%)</title><rect x="181.5" y="195.0" width="414.9" height="15" fill="#53e453" rx="2" ry="2"/>
-<text x="184.5" y="206.0">java/util/concurrent/locks/AbstractQueuedSynchronizer.doA..</text>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.doAcquireInterruptibly (764 samples, 34.70%)</title><rect x="190.6" y="323.0" width="409.4" height="15" fill="#6cfd6c" rx="2" ry="2"/>
+<text x="193.6" y="334.0">java/util/concurrent/locks/AbstractQueuedSynchronizer.do..</text>
 </g>
 <g>
-<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.parkAndCheckInterrupt (467 samples, 35.17%)</title><rect x="181.5" y="179.0" width="414.9" height="15" fill="#65f665" rx="2" ry="2"/>
-<text x="184.5" y="190.0">java/util/concurrent/locks/AbstractQueuedSynchronizer.par..</text>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.parkAndCheckInterrupt (764 samples, 34.70%)</title><rect x="190.6" y="307.0" width="409.4" height="15" fill="#5ff05f" rx="2" ry="2"/>
+<text x="193.6" y="318.0">java/util/concurrent/locks/AbstractQueuedSynchronizer.pa..</text>
 </g>
 <g>
-<title>java/util/concurrent/locks/LockSupport.park (467 samples, 35.17%)</title><rect x="181.5" y="163.0" width="414.9" height="15" fill="#62f362" rx="2" ry="2"/>
-<text x="184.5" y="174.0">java/util/concurrent/locks/LockSupport.park</text>
+<title>java/util/concurrent/locks/LockSupport.park (764 samples, 34.70%)</title><rect x="190.6" y="291.0" width="409.4" height="15" fill="#58e958" rx="2" ry="2"/>
+<text x="193.6" y="302.0">java/util/concurrent/locks/LockSupport.park</text>
 </g>
 <g>
-<title>jdk/internal/misc/Unsafe.park (467 samples, 35.17%)</title><rect x="181.5" y="147.0" width="414.9" height="15" fill="#56e756" rx="2" ry="2"/>
-<text x="184.5" y="158.0">jdk/internal/misc/Unsafe.park</text>
+<title>jdk/internal/misc/Unsafe.park (764 samples, 34.70%)</title><rect x="190.6" y="275.0" width="409.4" height="15" fill="#64f564" rx="2" ry="2"/>
+<text x="193.6" y="286.0">jdk/internal/misc/Unsafe.park</text>
 </g>
 <g>
-<title>java.util.concurrent.locks.ReentrantLock$NonfairSync (467 samples, 35.17%)</title><rect x="181.5" y="131.0" width="414.9" height="15" fill="#64d2d2" rx="2" ry="2"/>
-<text x="184.5" y="142.0">java.util.concurrent.locks.ReentrantLock$NonfairSync</text>
+<title>java.util.concurrent.locks.ReentrantLock$NonfairSync (764 samples, 34.70%)</title><rect x="190.6" y="259.0" width="409.4" height="15" fill="#6bd9d9" rx="2" ry="2"/>
+<text x="193.6" y="270.0">java.util.concurrent.locks.ReentrantLock$NonfairSync</text>
 </g>
 <g>
-<title>ru/mail/polis/service/re1nex/AsyncService$$Lambda$70/1434076159.run (23 samples, 1.73%)</title><rect x="596.4" y="259.0" width="20.5" height="15" fill="#6cfd6c" rx="2" ry="2"/>
-<text x="599.4" y="270.0"></text>
+<title>ru/mail/polis/service/re1nex/AsyncTopologyService$$Lambda$77/487508227.run (124 samples, 5.63%)</title><rect x="600.0" y="387.0" width="66.4" height="15" fill="#5ced5c" rx="2" ry="2"/>
+<text x="603.0" y="398.0">ru/mail..</text>
 </g>
 <g>
-<title>ru/mail/polis/service/re1nex/AsyncService.lambda$get$1 (23 samples, 1.73%)</title><rect x="596.4" y="243.0" width="20.5" height="15" fill="#67f867" rx="2" ry="2"/>
-<text x="599.4" y="254.0"></text>
+<title>ru/mail/polis/service/re1nex/AsyncTopologyService.lambda$get$0 (124 samples, 5.63%)</title><rect x="600.0" y="371.0" width="66.4" height="15" fill="#55e655" rx="2" ry="2"/>
+<text x="603.0" y="382.0">ru/mail..</text>
 </g>
 <g>
-<title>ru/mail/polis/service/re1nex/AsyncService.sendResponse (23 samples, 1.73%)</title><rect x="596.4" y="227.0" width="20.5" height="15" fill="#65f665" rx="2" ry="2"/>
-<text x="599.4" y="238.0"></text>
+<title>ru/mail/polis/service/re1nex/ApiController.proxy (98 samples, 4.45%)</title><rect x="600.0" y="355.0" width="52.5" height="15" fill="#5bec5b" rx="2" ry="2"/>
+<text x="603.0" y="366.0">ru/ma..</text>
 </g>
 <g>
-<title>one/nio/http/HttpSession.sendResponse (23 samples, 1.73%)</title><rect x="596.4" y="211.0" width="20.5" height="15" fill="#65f665" rx="2" ry="2"/>
-<text x="599.4" y="222.0"></text>
+<title>one/nio/http/HttpClient.invoke (98 samples, 4.45%)</title><rect x="600.0" y="339.0" width="52.5" height="15" fill="#5dee5d" rx="2" ry="2"/>
+<text x="603.0" y="350.0">one/n..</text>
 </g>
 <g>
-<title>one.nio.http.HttpSession (23 samples, 1.73%)</title><rect x="596.4" y="195.0" width="20.5" height="15" fill="#59c7c7" rx="2" ry="2"/>
-<text x="599.4" y="206.0"></text>
+<title>one/nio/http/HttpClient.invoke (98 samples, 4.45%)</title><rect x="600.0" y="323.0" width="52.5" height="15" fill="#5dee5d" rx="2" ry="2"/>
+<text x="603.0" y="334.0">one/n..</text>
 </g>
 <g>
-<title>one/nio/server/SelectorThread.run (645 samples, 48.57%)</title><rect x="616.9" y="307.0" width="573.1" height="15" fill="#63f463" rx="2" ry="2"/>
-<text x="619.9" y="318.0">one/nio/server/SelectorThread.run</text>
+<title>one/nio/pool/Pool.borrowObject (40 samples, 1.82%)</title><rect x="600.0" y="307.0" width="21.4" height="15" fill="#57e857" rx="2" ry="2"/>
+<text x="603.0" y="318.0">o..</text>
 </g>
 <g>
-<title>one/nio/net/Session.process (645 samples, 48.57%)</title><rect x="616.9" y="291.0" width="573.1" height="15" fill="#54e554" rx="2" ry="2"/>
-<text x="619.9" y="302.0">one/nio/net/Session.process</text>
+<title>one.nio.http.HttpClient (40 samples, 1.82%)</title><rect x="600.0" y="291.0" width="21.4" height="15" fill="#54c2c2" rx="2" ry="2"/>
+<text x="603.0" y="302.0">o..</text>
 </g>
 <g>
-<title>one/nio/http/HttpSession.processRead (645 samples, 48.57%)</title><rect x="616.9" y="275.0" width="573.1" height="15" fill="#52e352" rx="2" ry="2"/>
-<text x="619.9" y="286.0">one/nio/http/HttpSession.processRead</text>
+<title>one/nio/pool/Pool.returnObject (58 samples, 2.63%)</title><rect x="621.4" y="307.0" width="31.1" height="15" fill="#51e251" rx="2" ry="2"/>
+<text x="624.4" y="318.0">on..</text>
 </g>
 <g>
-<title>one/nio/http/HttpSession.processHttpBuffer (645 samples, 48.57%)</title><rect x="616.9" y="259.0" width="573.1" height="15" fill="#67f867" rx="2" ry="2"/>
-<text x="619.9" y="270.0">one/nio/http/HttpSession.processHttpBuffer</text>
+<title>one.nio.http.HttpClient (58 samples, 2.63%)</title><rect x="621.4" y="291.0" width="31.1" height="15" fill="#6bd9d9" rx="2" ry="2"/>
+<text x="624.4" y="302.0">on..</text>
 </g>
 <g>
-<title>one/nio/http/HttpSession.handleParsedRequest (645 samples, 48.57%)</title><rect x="616.9" y="243.0" width="573.1" height="15" fill="#69fa69" rx="2" ry="2"/>
-<text x="619.9" y="254.0">one/nio/http/HttpSession.handleParsedRequest</text>
+<title>ru/mail/polis/service/re1nex/AsyncTopologyService.getFromNode (26 samples, 1.18%)</title><rect x="652.5" y="355.0" width="13.9" height="15" fill="#52e352" rx="2" ry="2"/>
+<text x="655.5" y="366.0"></text>
 </g>
 <g>
-<title>one/nio/http/HttpServer.handleRequest (645 samples, 48.57%)</title><rect x="616.9" y="227.0" width="573.1" height="15" fill="#59ea59" rx="2" ry="2"/>
-<text x="619.9" y="238.0">one/nio/http/HttpServer.handleRequest</text>
+<title>ru/mail/polis/service/re1nex/ApiController.sendResponse (26 samples, 1.18%)</title><rect x="652.5" y="339.0" width="13.9" height="15" fill="#56e756" rx="2" ry="2"/>
+<text x="655.5" y="350.0"></text>
 </g>
 <g>
-<title>RequestHandler0_get.handleRequest (645 samples, 48.57%)</title><rect x="616.9" y="211.0" width="573.1" height="15" fill="#5bec5b" rx="2" ry="2"/>
-<text x="619.9" y="222.0">RequestHandler0_get.handleRequest</text>
+<title>one/nio/http/HttpSession.sendResponse (26 samples, 1.18%)</title><rect x="652.5" y="323.0" width="13.9" height="15" fill="#52e352" rx="2" ry="2"/>
+<text x="655.5" y="334.0"></text>
 </g>
 <g>
-<title>ru/mail/polis/service/re1nex/AsyncService.get (645 samples, 48.57%)</title><rect x="616.9" y="195.0" width="573.1" height="15" fill="#6afb6a" rx="2" ry="2"/>
-<text x="619.9" y="206.0">ru/mail/polis/service/re1nex/AsyncService.get</text>
+<title>one.nio.http.HttpSession (26 samples, 1.18%)</title><rect x="652.5" y="307.0" width="13.9" height="15" fill="#59c7c7" rx="2" ry="2"/>
+<text x="655.5" y="318.0"></text>
 </g>
 <g>
-<title>ru/mail/polis/service/re1nex/AsyncService.executeTask (645 samples, 48.57%)</title><rect x="616.9" y="179.0" width="573.1" height="15" fill="#54e554" rx="2" ry="2"/>
-<text x="619.9" y="190.0">ru/mail/polis/service/re1nex/AsyncService.executeTask</text>
+<title>one/nio/server/SelectorThread.run (977 samples, 44.37%)</title><rect x="666.4" y="435.0" width="523.6" height="15" fill="#5bec5b" rx="2" ry="2"/>
+<text x="669.4" y="446.0">one/nio/server/SelectorThread.run</text>
 </g>
 <g>
-<title>java/util/concurrent/ThreadPoolExecutor.execute (645 samples, 48.57%)</title><rect x="616.9" y="163.0" width="573.1" height="15" fill="#69fa69" rx="2" ry="2"/>
-<text x="619.9" y="174.0">java/util/concurrent/ThreadPoolExecutor.execute</text>
+<title>one/nio/net/Session.process (977 samples, 44.37%)</title><rect x="666.4" y="419.0" width="523.6" height="15" fill="#5eef5e" rx="2" ry="2"/>
+<text x="669.4" y="430.0">one/nio/net/Session.process</text>
 </g>
 <g>
-<title>java/util/concurrent/ArrayBlockingQueue.offer (645 samples, 48.57%)</title><rect x="616.9" y="147.0" width="573.1" height="15" fill="#5bec5b" rx="2" ry="2"/>
-<text x="619.9" y="158.0">java/util/concurrent/ArrayBlockingQueue.offer</text>
+<title>one.nio.http.HttpSession (4 samples, 0.18%)</title><rect x="666.4" y="403.0" width="2.2" height="15" fill="#6bd9d9" rx="2" ry="2"/>
+<text x="669.4" y="414.0"></text>
 </g>
 <g>
-<title>java/util/concurrent/locks/ReentrantLock.lock (645 samples, 48.57%)</title><rect x="616.9" y="131.0" width="573.1" height="15" fill="#6bfc6b" rx="2" ry="2"/>
-<text x="619.9" y="142.0">java/util/concurrent/locks/ReentrantLock.lock</text>
+<title>one/nio/http/HttpSession.processRead (973 samples, 44.19%)</title><rect x="668.6" y="403.0" width="521.4" height="15" fill="#69fa69" rx="2" ry="2"/>
+<text x="671.6" y="414.0">one/nio/http/HttpSession.processRead</text>
 </g>
 <g>
-<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.acquire (645 samples, 48.57%)</title><rect x="616.9" y="115.0" width="573.1" height="15" fill="#6dfe6d" rx="2" ry="2"/>
-<text x="619.9" y="126.0">java/util/concurrent/locks/AbstractQueuedSynchronizer.acquire</text>
+<title>one/nio/http/HttpSession.processHttpBuffer (973 samples, 44.19%)</title><rect x="668.6" y="387.0" width="521.4" height="15" fill="#5bec5b" rx="2" ry="2"/>
+<text x="671.6" y="398.0">one/nio/http/HttpSession.processHttpBuffer</text>
 </g>
 <g>
-<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.acquireQueued (645 samples, 48.57%)</title><rect x="616.9" y="99.0" width="573.1" height="15" fill="#60f160" rx="2" ry="2"/>
-<text x="619.9" y="110.0">java/util/concurrent/locks/AbstractQueuedSynchronizer.acquireQueued</text>
+<title>one/nio/http/HttpSession.handleParsedRequest (973 samples, 44.19%)</title><rect x="668.6" y="371.0" width="521.4" height="15" fill="#51e251" rx="2" ry="2"/>
+<text x="671.6" y="382.0">one/nio/http/HttpSession.handleParsedRequest</text>
 </g>
 <g>
-<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.parkAndCheckInterrupt (645 samples, 48.57%)</title><rect x="616.9" y="83.0" width="573.1" height="15" fill="#65f665" rx="2" ry="2"/>
-<text x="619.9" y="94.0">java/util/concurrent/locks/AbstractQueuedSynchronizer.parkAndCheckInterrupt</text>
+<title>one/nio/http/HttpServer.handleRequest (973 samples, 44.19%)</title><rect x="668.6" y="355.0" width="521.4" height="15" fill="#59ea59" rx="2" ry="2"/>
+<text x="671.6" y="366.0">one/nio/http/HttpServer.handleRequest</text>
 </g>
 <g>
-<title>java/util/concurrent/locks/LockSupport.park (645 samples, 48.57%)</title><rect x="616.9" y="67.0" width="573.1" height="15" fill="#6bfc6b" rx="2" ry="2"/>
-<text x="619.9" y="78.0">java/util/concurrent/locks/LockSupport.park</text>
+<title>RequestHandler1_get.handleRequest (973 samples, 44.19%)</title><rect x="668.6" y="339.0" width="521.4" height="15" fill="#63f463" rx="2" ry="2"/>
+<text x="671.6" y="350.0">RequestHandler1_get.handleRequest</text>
 </g>
 <g>
-<title>jdk/internal/misc/Unsafe.park (645 samples, 48.57%)</title><rect x="616.9" y="51.0" width="573.1" height="15" fill="#53e453" rx="2" ry="2"/>
-<text x="619.9" y="62.0">jdk/internal/misc/Unsafe.park</text>
+<title>ru/mail/polis/service/re1nex/AsyncTopologyService.get (973 samples, 44.19%)</title><rect x="668.6" y="323.0" width="521.4" height="15" fill="#50e150" rx="2" ry="2"/>
+<text x="671.6" y="334.0">ru/mail/polis/service/re1nex/AsyncTopologyService.get</text>
 </g>
 <g>
-<title>java.util.concurrent.locks.ReentrantLock$NonfairSync (645 samples, 48.57%)</title><rect x="616.9" y="35.0" width="573.1" height="15" fill="#50bebe" rx="2" ry="2"/>
-<text x="619.9" y="46.0">java.util.concurrent.locks.ReentrantLock$NonfairSync</text>
+<title>ru/mail/polis/service/re1nex/BaseAsyncService.executeTask (973 samples, 44.19%)</title><rect x="668.6" y="307.0" width="521.4" height="15" fill="#62f362" rx="2" ry="2"/>
+<text x="671.6" y="318.0">ru/mail/polis/service/re1nex/BaseAsyncService.executeTask</text>
+</g>
+<g>
+<title>ch/qos/logback/classic/Logger.error (13 samples, 0.59%)</title><rect x="668.6" y="291.0" width="7.0" height="15" fill="#62f362" rx="2" ry="2"/>
+<text x="671.6" y="302.0"></text>
+</g>
+<g>
+<title>ch/qos/logback/classic/Logger.filterAndLog_0_Or3Plus (13 samples, 0.59%)</title><rect x="668.6" y="275.0" width="7.0" height="15" fill="#50e150" rx="2" ry="2"/>
+<text x="671.6" y="286.0"></text>
+</g>
+<g>
+<title>ch/qos/logback/classic/Logger.buildLoggingEventAndAppend (13 samples, 0.59%)</title><rect x="668.6" y="259.0" width="7.0" height="15" fill="#68f968" rx="2" ry="2"/>
+<text x="671.6" y="270.0"></text>
+</g>
+<g>
+<title>ch/qos/logback/classic/Logger.callAppenders (13 samples, 0.59%)</title><rect x="668.6" y="243.0" width="7.0" height="15" fill="#60f160" rx="2" ry="2"/>
+<text x="671.6" y="254.0"></text>
+</g>
+<g>
+<title>ch/qos/logback/classic/Logger.appendLoopOnAppenders (13 samples, 0.59%)</title><rect x="668.6" y="227.0" width="7.0" height="15" fill="#5ff05f" rx="2" ry="2"/>
+<text x="671.6" y="238.0"></text>
+</g>
+<g>
+<title>ch/qos/logback/core/spi/AppenderAttachableImpl.appendLoopOnAppenders (13 samples, 0.59%)</title><rect x="668.6" y="211.0" width="7.0" height="15" fill="#53e453" rx="2" ry="2"/>
+<text x="671.6" y="222.0"></text>
+</g>
+<g>
+<title>ch/qos/logback/core/UnsynchronizedAppenderBase.doAppend (13 samples, 0.59%)</title><rect x="668.6" y="195.0" width="7.0" height="15" fill="#57e857" rx="2" ry="2"/>
+<text x="671.6" y="206.0"></text>
+</g>
+<g>
+<title>ch/qos/logback/core/OutputStreamAppender.append (13 samples, 0.59%)</title><rect x="668.6" y="179.0" width="7.0" height="15" fill="#5dee5d" rx="2" ry="2"/>
+<text x="671.6" y="190.0"></text>
+</g>
+<g>
+<title>ch/qos/logback/core/OutputStreamAppender.subAppend (13 samples, 0.59%)</title><rect x="668.6" y="163.0" width="7.0" height="15" fill="#60f160" rx="2" ry="2"/>
+<text x="671.6" y="174.0"></text>
+</g>
+<g>
+<title>ch/qos/logback/core/OutputStreamAppender.writeBytes (1 samples, 0.05%)</title><rect x="668.6" y="147.0" width="0.5" height="15" fill="#5ced5c" rx="2" ry="2"/>
+<text x="671.6" y="158.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/ReentrantLock.lock (1 samples, 0.05%)</title><rect x="668.6" y="131.0" width="0.5" height="15" fill="#69fa69" rx="2" ry="2"/>
+<text x="671.6" y="142.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.acquire (1 samples, 0.05%)</title><rect x="668.6" y="115.0" width="0.5" height="15" fill="#50e150" rx="2" ry="2"/>
+<text x="671.6" y="126.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.acquireQueued (1 samples, 0.05%)</title><rect x="668.6" y="99.0" width="0.5" height="15" fill="#6afb6a" rx="2" ry="2"/>
+<text x="671.6" y="110.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.parkAndCheckInterrupt (1 samples, 0.05%)</title><rect x="668.6" y="83.0" width="0.5" height="15" fill="#52e352" rx="2" ry="2"/>
+<text x="671.6" y="94.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/LockSupport.park (1 samples, 0.05%)</title><rect x="668.6" y="67.0" width="0.5" height="15" fill="#55e655" rx="2" ry="2"/>
+<text x="671.6" y="78.0"></text>
+</g>
+<g>
+<title>jdk/internal/misc/Unsafe.park (1 samples, 0.05%)</title><rect x="668.6" y="51.0" width="0.5" height="15" fill="#6bfc6b" rx="2" ry="2"/>
+<text x="671.6" y="62.0"></text>
+</g>
+<g>
+<title>java.util.concurrent.locks.ReentrantLock$NonfairSync (1 samples, 0.05%)</title><rect x="668.6" y="35.0" width="0.5" height="15" fill="#50bebe" rx="2" ry="2"/>
+<text x="671.6" y="46.0"></text>
+</g>
+<g>
+<title>ch/qos/logback/core/encoder/LayoutWrappingEncoder.encode (12 samples, 0.54%)</title><rect x="669.1" y="147.0" width="6.5" height="15" fill="#58e958" rx="2" ry="2"/>
+<text x="672.1" y="158.0"></text>
+</g>
+<g>
+<title>ch/qos/logback/classic/layout/TTLLLayout.doLayout (12 samples, 0.54%)</title><rect x="669.1" y="131.0" width="6.5" height="15" fill="#54e554" rx="2" ry="2"/>
+<text x="672.1" y="142.0"></text>
+</g>
+<g>
+<title>ch/qos/logback/classic/layout/TTLLLayout.doLayout (12 samples, 0.54%)</title><rect x="669.1" y="115.0" width="6.5" height="15" fill="#52e352" rx="2" ry="2"/>
+<text x="672.1" y="126.0"></text>
+</g>
+<g>
+<title>ch/qos/logback/core/util/CachingDateFormatter.format (12 samples, 0.54%)</title><rect x="669.1" y="99.0" width="6.5" height="15" fill="#62f362" rx="2" ry="2"/>
+<text x="672.1" y="110.0"></text>
+</g>
+<g>
+<title>ch.qos.logback.core.util.CachingDateFormatter (12 samples, 0.54%)</title><rect x="669.1" y="83.0" width="6.5" height="15" fill="#5fcdcd" rx="2" ry="2"/>
+<text x="672.1" y="94.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/ThreadPoolExecutor.execute (960 samples, 43.60%)</title><rect x="675.6" y="291.0" width="514.4" height="15" fill="#61f261" rx="2" ry="2"/>
+<text x="678.6" y="302.0">java/util/concurrent/ThreadPoolExecutor.execute</text>
+</g>
+<g>
+<title>java/util/concurrent/ArrayBlockingQueue.offer (959 samples, 43.55%)</title><rect x="675.6" y="275.0" width="513.9" height="15" fill="#5ff05f" rx="2" ry="2"/>
+<text x="678.6" y="286.0">java/util/concurrent/ArrayBlockingQueue.offer</text>
+</g>
+<g>
+<title>java/util/concurrent/locks/ReentrantLock.lock (959 samples, 43.55%)</title><rect x="675.6" y="259.0" width="513.9" height="15" fill="#5aeb5a" rx="2" ry="2"/>
+<text x="678.6" y="270.0">java/util/concurrent/locks/ReentrantLock.lock</text>
+</g>
+<g>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.acquire (959 samples, 43.55%)</title><rect x="675.6" y="243.0" width="513.9" height="15" fill="#6cfd6c" rx="2" ry="2"/>
+<text x="678.6" y="254.0">java/util/concurrent/locks/AbstractQueuedSynchronizer.acquire</text>
+</g>
+<g>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.acquireQueued (959 samples, 43.55%)</title><rect x="675.6" y="227.0" width="513.9" height="15" fill="#60f160" rx="2" ry="2"/>
+<text x="678.6" y="238.0">java/util/concurrent/locks/AbstractQueuedSynchronizer.acquireQueued</text>
+</g>
+<g>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.parkAndCheckInterrupt (959 samples, 43.55%)</title><rect x="675.6" y="211.0" width="513.9" height="15" fill="#63f463" rx="2" ry="2"/>
+<text x="678.6" y="222.0">java/util/concurrent/locks/AbstractQueuedSynchronizer.parkAndCheckInter..</text>
+</g>
+<g>
+<title>java/util/concurrent/locks/LockSupport.park (959 samples, 43.55%)</title><rect x="675.6" y="195.0" width="513.9" height="15" fill="#62f362" rx="2" ry="2"/>
+<text x="678.6" y="206.0">java/util/concurrent/locks/LockSupport.park</text>
+</g>
+<g>
+<title>jdk/internal/misc/Unsafe.park (959 samples, 43.55%)</title><rect x="675.6" y="179.0" width="513.9" height="15" fill="#61f261" rx="2" ry="2"/>
+<text x="678.6" y="190.0">jdk/internal/misc/Unsafe.park</text>
+</g>
+<g>
+<title>java.util.concurrent.locks.ReentrantLock$NonfairSync (959 samples, 43.55%)</title><rect x="675.6" y="163.0" width="513.9" height="15" fill="#58c6c6" rx="2" ry="2"/>
+<text x="678.6" y="174.0">java.util.concurrent.locks.ReentrantLock$NonfairSync</text>
+</g>
+<g>
+<title>java/util/concurrent/ThreadPoolExecutor.reject (1 samples, 0.05%)</title><rect x="1189.5" y="275.0" width="0.5" height="15" fill="#56e756" rx="2" ry="2"/>
+<text x="1192.5" y="286.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/ThreadPoolExecutor$AbortPolicy.rejectedExecution (1 samples, 0.05%)</title><rect x="1189.5" y="259.0" width="0.5" height="15" fill="#61f261" rx="2" ry="2"/>
+<text x="1192.5" y="270.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/ThreadPoolExecutor.toString (1 samples, 0.05%)</title><rect x="1189.5" y="243.0" width="0.5" height="15" fill="#53e453" rx="2" ry="2"/>
+<text x="1192.5" y="254.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/ArrayBlockingQueue.size (1 samples, 0.05%)</title><rect x="1189.5" y="227.0" width="0.5" height="15" fill="#67f867" rx="2" ry="2"/>
+<text x="1192.5" y="238.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/ReentrantLock.lock (1 samples, 0.05%)</title><rect x="1189.5" y="211.0" width="0.5" height="15" fill="#53e453" rx="2" ry="2"/>
+<text x="1192.5" y="222.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.acquire (1 samples, 0.05%)</title><rect x="1189.5" y="195.0" width="0.5" height="15" fill="#56e756" rx="2" ry="2"/>
+<text x="1192.5" y="206.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.acquireQueued (1 samples, 0.05%)</title><rect x="1189.5" y="179.0" width="0.5" height="15" fill="#50e150" rx="2" ry="2"/>
+<text x="1192.5" y="190.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.parkAndCheckInterrupt (1 samples, 0.05%)</title><rect x="1189.5" y="163.0" width="0.5" height="15" fill="#60f160" rx="2" ry="2"/>
+<text x="1192.5" y="174.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/LockSupport.park (1 samples, 0.05%)</title><rect x="1189.5" y="147.0" width="0.5" height="15" fill="#66f766" rx="2" ry="2"/>
+<text x="1192.5" y="158.0"></text>
+</g>
+<g>
+<title>jdk/internal/misc/Unsafe.park (1 samples, 0.05%)</title><rect x="1189.5" y="131.0" width="0.5" height="15" fill="#5ced5c" rx="2" ry="2"/>
+<text x="1192.5" y="142.0"></text>
+</g>
+<g>
+<title>java.util.concurrent.locks.ReentrantLock$NonfairSync (1 samples, 0.05%)</title><rect x="1189.5" y="115.0" width="0.5" height="15" fill="#5bc9c9" rx="2" ry="2"/>
+<text x="1192.5" y="126.0"></text>
 </g>
 </g>
 </svg>
