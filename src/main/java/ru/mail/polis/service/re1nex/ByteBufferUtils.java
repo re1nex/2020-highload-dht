@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-public class ByteBufferUtils {
+final class ByteBufferUtils {
     @NotNull
     private static final byte[] emptyArray = new byte[0];
 

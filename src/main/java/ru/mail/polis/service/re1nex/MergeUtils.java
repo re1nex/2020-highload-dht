@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class MergeUtils {
+final class MergeUtils {
 
     private MergeUtils() {
     }
