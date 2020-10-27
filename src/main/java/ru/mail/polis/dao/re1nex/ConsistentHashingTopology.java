@@ -101,10 +101,10 @@ public class ConsistentHashingTopology implements Topology<String> {
                                  @NotNull final Set<String> dst,
                                  final int numNodes) {
         for (final String item : src.values()) {
-            dst.add(item);
             if (dst.size() == numNodes) {
                 return;
             }
+            dst.add(item);
         }
     }
 
