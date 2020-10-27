@@ -52,7 +52,7 @@ public class MergeUtils {
         if (numResponses < ack) {
             return new Response(ApiController.NOT_ENOUGH_REPLICAS, Response.EMPTY);
         }
-        return new Response(Response.ACCEPTED, Response.EMPTY);
+        return new Response(isPut ? Response.CREATED : Response.ACCEPTED, Response.EMPTY);
 
     }
 }

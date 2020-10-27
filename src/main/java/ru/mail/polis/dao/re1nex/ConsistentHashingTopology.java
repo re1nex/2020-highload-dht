@@ -111,7 +111,6 @@ public class ConsistentHashingTopology implements Topology<String> {
         }
     }
 
-
     private static long calculateHash(final byte[] key) throws NoSuchAlgorithmException {
         final MessageDigest instance = MessageDigest.getInstance("MD5");
         instance.update(key);
@@ -124,5 +123,4 @@ public class ConsistentHashingTopology implements Topology<String> {
         }
         return h;
     }
-
 }

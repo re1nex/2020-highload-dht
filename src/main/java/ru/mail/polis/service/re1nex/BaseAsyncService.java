@@ -69,7 +69,6 @@ abstract class BaseAsyncService extends HttpServer implements Service {
         );
     }
 
-
     private static HttpServerConfig provideConfig(final int port) {
         final AcceptorConfig acceptorConfig = new AcceptorConfig();
         acceptorConfig.port = port;
