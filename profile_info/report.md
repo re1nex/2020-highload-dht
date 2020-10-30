@@ -253,28 +253,28 @@ Transfer/sec:    130.82KB
 
 ## CPU
 Реализация без репликации
-![image](https://github.com/re1nex/2020-highload-dht/blob/hw4/profile_info/old%20ver/put/cpu.svg)
+![image](https://github.com/re1nex/2020-highload-dht/blob/hw5/profile_info/old%20ver/put/cpu.svg)
 
 Реализация c репликацией
-![image](https://github.com/re1nex/2020-highload-dht/blob/hw4/profile_info/with%20replica/put/cpu.svg)
+![image](https://github.com/re1nex/2020-highload-dht/blob/hw5/profile_info/with%20replica/put/cpu.svg)
 
 Количество сэмплов относящихся к сервису увеличилось на 6 %. 28 % занимает управление репликами (их переадресация на другие ноды, вставка в локальное хранилище) 12 % занимают запросы от родительской ноды. Результаты показывают, что новая реализация более требовательная к ресурсам cpu, что было ожидаемо.
 
 ## ALLOC
 Реализация без репликации
-![image](https://github.com/re1nex/2020-highload-dht/blob/hw4/profile_info/old%20ver/put/alloc.svg)
+![image](https://github.com/re1nex/2020-highload-dht/blob/hw5/profile_info/old%20ver/put/alloc.svg)
 
 Реализация c репликацией
-![image](https://github.com/re1nex/2020-highload-dht/blob/hw4/profile_info/with%20replica/put/alloc.svg)
+![image](https://github.com/re1nex/2020-highload-dht/blob/hw5/profile_info/with%20replica/put/alloc.svg)
 
 По аллокациям в новой реализации уходит больше на селекторы (на 10%), это связано с тем, что каждый запрос по сути включает в себя еще 2 дополнительных на реплики, а в случае старой реализации всего 1 запрос на нужную ноду. Уменьшился общий вклад HttpClient.invoke, т.к. появилось большое число синхронных запросов, которые тоже достаточно ресурсоемкие.
 
 ## LOCK 
 Реализация без репликации
-![image](https://github.com/re1nex/2020-highload-dht/blob/hw4/profile_info/old%20ver/put/lock.svg)
+![image](https://github.com/re1nex/2020-highload-dht/blob/hw5/profile_info/old%20ver/put/lock.svg)
 
 Реализация c репликацией
-![image](https://github.com/re1nex/2020-highload-dht/blob/hw4/profile_info/with%20replica/put/lock.svg)
+![image](https://github.com/re1nex/2020-highload-dht/blob/hw5/profile_info/with%20replica/put/lock.svg)
 
 
 Количество сэмплов селекторов берущих задачи под локами увеличилось, что было ожидаемо, т.к. больше дополнительных запросов приходится обрабатывать
@@ -534,28 +534,28 @@ Transfer/sec:    143.17KB
 
 ## CPU
 Реализация без репликации
-![image](https://github.com/re1nex/2020-highload-dht/blob/hw4/profile_info/old%20ver/get/cpu.svg)
+![image](https://github.com/re1nex/2020-highload-dht/blob/hw5/profile_info/old%20ver/get/cpu.svg)
 
 Реализация c репликацией
-![image](https://github.com/re1nex/2020-highload-dht/blob/hw4/profile_info/with%20replica/get/cpu.svg)
+![image](https://github.com/re1nex/2020-highload-dht/blob/hw5/profile_info/with%20replica/get/cpu.svg)
 
 Больше кода обработано JIT компилятором. Больше сэмплов относящихся к сервису (на 10 %), что ожидаемо т.к. больше запросов нужно обрабатывать.
 
 ## ALLOC
 Реализация без репликации
-![image](https://github.com/re1nex/2020-highload-dht/blob/hw4/profile_info/old%20ver/get/alloc.svg)
+![image](https://github.com/re1nex/2020-highload-dht/blob/hw5/profile_info/old%20ver/get/alloc.svg)
 
 Реализация c репликацией
-![image](https://github.com/re1nex/2020-highload-dht/blob/hw4/profile_info/with%20replica/get/alloc.svg)
+![image](https://github.com/re1nex/2020-highload-dht/blob/hw5/profile_info/with%20replica/get/alloc.svg)
 
 Ситуация похожа на ситуацию с put, меньше аллокаций распределилось на переадресацию, т.к. появились синхронные запросы.
 
 ## LOCK 
 Реализация без репликации
-![image](https://github.com/re1nex/2020-highload-dht/blob/hw4/profile_info/old%20ver/get/lock.svg)
+![image](https://github.com/re1nex/2020-highload-dht/blob/hw5/profile_info/old%20ver/get/lock.svg)
 
 Реализация c репликацией
-![image](https://github.com/re1nex/2020-highload-dht/blob/hw4/profile_info/with%20replica/get/lock.svg)
+![image](https://github.com/re1nex/2020-highload-dht/blob/hw5/profile_info/with%20replica/get/lock.svg)
 
 
 Также как и спуть количество локов у селекторов стало больше, т.к. и запросов стало больше.
