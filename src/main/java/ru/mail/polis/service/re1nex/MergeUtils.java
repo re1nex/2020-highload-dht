@@ -24,7 +24,7 @@ final class MergeUtils {
             } else if (response.getStatus() == 200) {
                 numResponses++;
                 final long generation = Long.parseLong(response.getHeader(ApiController.GENERATION));
-                if (lastGeneration > generation || lastGeneration == 0) {
+                if (lastGeneration < generation || lastGeneration == 0) {
                     lastGeneration = generation;
                     if (response.getHeader(ApiController.TOMBSTONE) == null) {
                         lastTombstone = false;
