@@ -25,11 +25,11 @@ final class MergeUtils {
                 final long generation = Long.parseLong(response.getHeader(ApiController.GENERATION));
                 if (lastGeneration > generation || lastGeneration == 0) {
                     lastGeneration = generation;
-                    if (response.getHeader(ApiController.TOMBSTONE) != null) {
-                        lastTombstone = true;
-                    } else {
+                    if (response.getHeader(ApiController.TOMBSTONE) == null) {
                         lastTombstone = false;
                         last = response;
+                    } else {
+                        lastTombstone = true;
                     }
                 }
             }
