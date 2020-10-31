@@ -87,6 +87,7 @@ public class NewDAO implements DAO {
         }
     }
 
+    @NotNull
     @Override
     public Iterator<Cell> cellIterator(@NotNull final ByteBuffer from) throws IOException {
         final TableSet snapshot;
