@@ -13,6 +13,9 @@ import ru.mail.polis.dao.re1nex.Topology;
 
 import java.io.IOException;
 
+/**
+ * AsyncTopologyService provides asynchronous service with methods for work with shading systems with replicas.
+ */
 public class AsyncTopologyReplicaService extends BaseAsyncService {
     @NotNull
     private static final Logger logger = LoggerFactory.getLogger(AsyncTopologyReplicaService.class);
@@ -35,9 +38,7 @@ public class AsyncTopologyReplicaService extends BaseAsyncService {
         super(port, dao, workersCount, queueSize, topology, logger);
         assert workersCount > 0;
         assert queueSize > 0;
-        final int from = topology.getUniqueSize();
-        final int ack = from / 2 + 1;
-        this.defaultReplicaInfo = new ReplicaInfo(ack, from);
+        this.defaultReplicaInfo = ReplicaInfo.of(topology.getUniqueSize());
     }
 
     /**

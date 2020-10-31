@@ -25,6 +25,10 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * BaseAsyncService provide service base methods of service (status, handleDefault)
+ * and methods for asynchronous handling of requests (stop, executeTask - execute in ThreadPoolExecutor).
+ */
 abstract class BaseAsyncService extends HttpServer implements Service {
     @NotNull
     protected final ExecutorService executor;
@@ -36,11 +40,11 @@ abstract class BaseAsyncService extends HttpServer implements Service {
     private final Logger logger;
 
     BaseAsyncService(final int port,
-                                @NotNull final DAO dao,
-                                final int workersCount,
-                                final int queueSize,
-                                @NotNull final Topology<String> topology,
-                                @NotNull final Logger logger) throws IOException {
+                     @NotNull final DAO dao,
+                     final int workersCount,
+                     final int queueSize,
+                     @NotNull final Topology<String> topology,
+                     @NotNull final Logger logger) throws IOException {
         super(provideConfig(port));
         assert workersCount > 0;
         assert queueSize > 0;

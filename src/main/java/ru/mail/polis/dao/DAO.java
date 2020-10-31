@@ -98,7 +98,10 @@ public interface DAO extends Closeable {
         if (!iter.hasNext()) {
             throw new NoSuchElementException("Not found");
         }
-
+        final Cell next = iter.next();
+        if (!next.getKey().equals(key)) {
+            throw new NoSuchElementException("Not found");
+        }
         return iter.next().getValue();
     }
 

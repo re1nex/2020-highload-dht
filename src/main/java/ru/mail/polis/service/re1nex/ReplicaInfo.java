@@ -35,4 +35,13 @@ class ReplicaInfo {
         }
         return new ReplicaInfo(ack, from);
     }
+
+    @NotNull
+    static ReplicaInfo of(final int topologySize) {
+        if (topologySize <= 0) {
+            throw new IllegalArgumentException("Wrong args");
+        }
+        final int ack = topologySize / 2 + 1;
+        return new ReplicaInfo(ack, topologySize);
+    }
 }

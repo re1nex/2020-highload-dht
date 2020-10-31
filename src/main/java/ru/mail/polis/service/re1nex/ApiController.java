@@ -79,7 +79,7 @@ class ApiController {
             @NotNull final HttpClient client) {
         try {
             request.addHeader(PROXY_FOR + node);
-            session.sendResponse(client.invoke(request));
+            sendResponse(session, client.invoke(request));
         } catch (IOException | InterruptedException | PoolException | HttpException e) {
             logger.error(RESPONSE_ERROR, e);
             sendErrorResponse(session, Response.INTERNAL_ERROR);
@@ -102,13 +102,11 @@ class ApiController {
             final Response response;
             if (value.isTombstone()) {
                 response = new Response(Response.OK, Response.EMPTY);
+                response.addHeader(TOMBSTONE);
             } else {
                 response = new Response(Response.OK, ByteBufferUtils.byteBufferToByte(value.getData()));
             }
-            response.addHeader(ApiController.GENERATION + value.getTimestamp());
-            if (value.isTombstone()) {
-                response.addHeader(ApiController.TOMBSTONE);
-            }
+            response.addHeader(GENERATION + value.getTimestamp());
             return response;
         } catch (NoSuchElementException e) {
             return new Response(Response.NOT_FOUND, Response.EMPTY);
@@ -124,8 +122,8 @@ class ApiController {
             dao.upsert(ByteBufferUtils.getByteBufferKey(id), ByteBuffer.wrap(request.getBody()));
             return new Response(Response.CREATED, Response.EMPTY);
         } catch (IOException e) {
-            logger.error("PUT failed! Cannot put the element: {}. Request: {}. Cause: {}",
-                    id, request.getBody(), e.getCause());
+            logger.error("PUT failed! Cannot put the element: {}. Request size: {}. Cause: {}",
+                    id, request.getBody().length, e.getCause());
             return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
         }
     }
@@ -162,8 +160,9 @@ class ApiController {
     void sendReplica(@NotNull final String id,
                      @NotNull final ReplicaInfo replicaInfo,
                      @NotNull final HttpSession session,
-                     @NotNull final Request request) {
-        request.addHeader(ApiController.PROXY_FOR);
+                     @NotNull final Request oldRequest) {
+        final Request request = new Request(oldRequest);
+        request.addHeader(PROXY_FOR);
         final int from = replicaInfo.getFrom();
         final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
         final Set<String> nodes;

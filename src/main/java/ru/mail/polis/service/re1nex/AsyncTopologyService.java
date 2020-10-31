@@ -17,6 +17,9 @@ import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
 
+/**
+ * AsyncTopologyService provides asynchronous service with methods for work with shading systems.
+ */
 public class AsyncTopologyService extends BaseAsyncService {
     @NotNull
     private static final Logger logger = LoggerFactory.getLogger(AsyncTopologyService.class);
