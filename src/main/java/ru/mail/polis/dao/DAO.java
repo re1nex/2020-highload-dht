@@ -36,8 +36,6 @@ import java.util.NoSuchElementException;
  */
 public interface DAO extends Closeable {
 
-    String NOT_FOUND = "Not found";
-
     /**
      * Provides iterator (possibly empty) over {@link Record}s starting at "from" key (inclusive)
      * in <b>ascending</b> order according to {@link Record#compareTo(Record)}.
@@ -78,14 +76,14 @@ public interface DAO extends Closeable {
     default ByteBuffer get(@NotNull ByteBuffer key) throws IOException, NoSuchElementException {
         final Iterator<Record> iter = iterator(key);
         if (!iter.hasNext()) {
-            throw new NoSuchElementException(NOT_FOUND);
+            throw new NoSuchElementException(DAOResultCode.NOT_FOUND.name());
         }
 
         final Record next = iter.next();
         if (next.getKey().equals(key)) {
             return next.getValue();
         } else {
-            throw new NoSuchElementException(NOT_FOUND);
+            throw new NoSuchElementException(DAOResultCode.NOT_FOUND.name());
         }
     }
 
@@ -98,13 +96,13 @@ public interface DAO extends Closeable {
     default Value getValue(@NotNull ByteBuffer key) throws IOException, NoSuchElementException {
         final Iterator<Cell> iter = cellIterator(key);
         if (!iter.hasNext()) {
-            throw new NoSuchElementException("Not found");
+            throw new NoSuchElementException(DAOResultCode.NOT_FOUND.name());
         }
         final Cell next = iter.next();
         if (!next.getKey().equals(key)) {
-            throw new NoSuchElementException("Not found");
+            throw new NoSuchElementException(DAOResultCode.NOT_FOUND.name());
         }
-        return iter.next().getValue();
+        return next.getValue();
     }
 
     @NotNull

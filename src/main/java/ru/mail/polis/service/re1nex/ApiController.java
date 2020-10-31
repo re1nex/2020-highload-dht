@@ -180,7 +180,7 @@ class ApiController {
                 handleResponses(nodes,
                         responses,
                         request,
-                        get(id));
+                        () -> get(id));
                 sendResponse(session,
                         MergeUtils.mergeGetResponses(responses, ack));
                 break;
@@ -188,7 +188,7 @@ class ApiController {
                 handleResponses(nodes,
                         responses,
                         request,
-                        delete(id));
+                        () -> delete(id));
                 sendResponse(session,
                         MergeUtils.mergePutDeleteResponses(responses, ack, false));
                 break;
@@ -196,7 +196,7 @@ class ApiController {
                 handleResponses(nodes,
                         responses,
                         request,
-                        put(id, request));
+                        () -> put(id, request));
                 sendResponse(session,
                         MergeUtils.mergePutDeleteResponses(responses, ack, true));
                 break;
@@ -208,12 +208,16 @@ class ApiController {
     private void handleResponses(@NotNull final Set<String> nodes,
                                  @NotNull final List<Response> responses,
                                  @NotNull final Request request,
-                                 @NotNull final Response response) {
+                                 @NotNull final LocalResponse response) {
         if (topology.removeLocal(nodes)) {
-            responses.add(response);
+            responses.add(response.handleLocalResponse());
         }
         for (final String node : nodes) {
             responses.add(proxy(node, request));
         }
+    }
+
+    interface LocalResponse {
+        Response handleLocalResponse();
     }
 }

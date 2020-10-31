@@ -1,6 +1,7 @@
 package ru.mail.polis.service.re1nex;
 
 import one.nio.http.Response;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -34,14 +35,25 @@ final class MergeUtils {
                 }
             }
         }
+        return getResponseFromValues(numResponses,
+                ack,
+                lastTombstone,
+                numNotFoundResponses,
+                last);
+    }
+
+    static Response getResponseFromValues(final int numResponses,
+                                          final int ack,
+                                          final boolean lastTombstone,
+                                          final int numNotFoundResponses,
+                                          @NonNull final Response lastResponse) {
         if (numResponses < ack) {
             return new Response(ApiController.NOT_ENOUGH_REPLICAS, Response.EMPTY);
         }
         if (lastTombstone || numResponses == numNotFoundResponses) {
             return new Response(Response.NOT_FOUND, Response.EMPTY);
         }
-        return Response.ok(last.getBody());
-
+        return Response.ok(lastResponse.getBody());
     }
 
     static Response mergePutDeleteResponses(@NotNull final List<Response> responses,
