@@ -6,7 +6,6 @@ import one.nio.http.HttpSession;
 import one.nio.http.Request;
 import one.nio.http.Response;
 import one.nio.pool.PoolException;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import ru.mail.polis.dao.DAO;
@@ -23,16 +22,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 class ApiController {
-    @NotNull
-    static final String NOT_ENOUGH_REPLICAS = "504 Not Enough Replicas";
-    @NonNull
-    private static final String RESPONSE_ERROR = "Can't send response error";
-    @NotNull
-    static final String GENERATION = "generation";
-    @NotNull
-    static final String TOMBSTONE = "tombstone";
-    @NotNull
-    static final String PROXY_FOR = "X-Proxy-For: ";
     @NotNull
     private final DAO dao;
     @NotNull
@@ -52,46 +41,14 @@ class ApiController {
         this.logger = logger;
     }
 
-    void sendResponse(@NotNull final HttpSession session,
-                      @NotNull final Response response) {
-        try {
-            session.sendResponse(response);
-        } catch (IOException e) {
-            logger.error("Cannot send respose", e);
-        }
-    }
-
     @NotNull
     private Response proxy(@NotNull final String node,
                            @NotNull final Request request) {
         try {
             return nodeToClient.get(node).invoke(request);
         } catch (IOException | InterruptedException | HttpException | PoolException e) {
-            logger.error(RESPONSE_ERROR, e);
+           logger.error(ApiUtils.RESPONSE_ERROR, e);
             return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
-        }
-    }
-
-    void proxy(
-            @NotNull final String node,
-            @NotNull final Request request,
-            @NotNull final HttpSession session,
-            @NotNull final HttpClient client) {
-        try {
-            request.addHeader(PROXY_FOR + node);
-            sendResponse(session, client.invoke(request));
-        } catch (IOException | InterruptedException | PoolException | HttpException e) {
-            logger.error(RESPONSE_ERROR, e);
-            sendErrorResponse(session, Response.INTERNAL_ERROR);
-        }
-    }
-
-    void sendErrorResponse(@NotNull final HttpSession session,
-                           @NotNull final String internalError) {
-        try {
-            session.sendResponse(new Response(internalError, Response.EMPTY));
-        } catch (IOException ioException) {
-            logger.error(RESPONSE_ERROR, ioException);
         }
     }
 
@@ -102,11 +59,11 @@ class ApiController {
             final Response response;
             if (value.isTombstone()) {
                 response = new Response(Response.OK, Response.EMPTY);
-                response.addHeader(TOMBSTONE);
+                response.addHeader(ApiUtils.TOMBSTONE);
             } else {
                 response = new Response(Response.OK, ByteBufferUtils.byteBufferToByte(value.getData()));
             }
-            response.addHeader(GENERATION + value.getTimestamp());
+            response.addHeader(ApiUtils.GENERATION + value.getTimestamp());
             return response;
         } catch (NoSuchElementException e) {
             return new Response(Response.NOT_FOUND, Response.EMPTY);
@@ -139,18 +96,18 @@ class ApiController {
         }
     }
 
-    void sendProxy(@NotNull final String id,
-                   @NotNull final HttpSession session,
-                   @NotNull final Request request) {
+    void handleResponseLocal(@NotNull final String id,
+                             @NotNull final HttpSession session,
+                             @NotNull final Request request) {
         switch (request.getMethod()) {
             case Request.METHOD_GET:
-                sendResponse(session, get(id));
+                ApiUtils.sendResponse(session, get(id), logger);
                 break;
             case Request.METHOD_PUT:
-                sendResponse(session, put(id, request));
+                ApiUtils.sendResponse(session, put(id, request), logger);
                 break;
             case Request.METHOD_DELETE:
-                sendResponse(session, delete(id));
+                ApiUtils.sendResponse(session, delete(id), logger);
                 break;
             default:
                 break;
@@ -162,7 +119,7 @@ class ApiController {
                      @NotNull final HttpSession session,
                      @NotNull final Request oldRequest) {
         final Request request = new Request(oldRequest);
-        request.addHeader(PROXY_FOR);
+        request.addHeader(ApiUtils.PROXY_FOR);
         final int from = replicaInfo.getFrom();
         final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
         final Set<String> nodes;
@@ -170,7 +127,7 @@ class ApiController {
             nodes = topology.severalNodesForKey(key, from);
         } catch (NoSuchAlgorithmException e) {
             logger.error("Can't get hash", e);
-            sendResponse(session, new Response(Response.INTERNAL_ERROR, Response.EMPTY));
+            ApiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
             return;
         }
         final List<Response> responses = new ArrayList<>();
@@ -181,24 +138,24 @@ class ApiController {
                         responses,
                         request,
                         () -> get(id));
-                sendResponse(session,
-                        MergeUtils.mergeGetResponses(responses, ack));
+                ApiUtils.sendResponse(session,
+                        MergeUtils.mergeGetResponses(responses, ack), logger);
                 break;
             case Request.METHOD_DELETE:
                 handleResponses(nodes,
                         responses,
                         request,
                         () -> delete(id));
-                sendResponse(session,
-                        MergeUtils.mergePutDeleteResponses(responses, ack, false));
+                ApiUtils.sendResponse(session,
+                        MergeUtils.mergePutDeleteResponses(responses, ack, false), logger);
                 break;
             case Request.METHOD_PUT:
                 handleResponses(nodes,
                         responses,
                         request,
                         () -> put(id, request));
-                sendResponse(session,
-                        MergeUtils.mergePutDeleteResponses(responses, ack, true));
+                ApiUtils.sendResponse(session,
+                        MergeUtils.mergePutDeleteResponses(responses, ack, true), logger);
                 break;
             default:
                 break;

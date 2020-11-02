@@ -13,14 +13,14 @@ import ru.mail.polis.dao.re1nex.Topology;
 
 import java.io.IOException;
 
-/**
- * AsyncTopologyService provides asynchronous service with methods for work with shading systems with replicas.
- */
-public class AsyncTopologyReplicaService extends BaseAsyncService {
+public class FullAsyncTopologyReplicaService extends BaseService {
     @NotNull
-    private static final Logger logger = LoggerFactory.getLogger(AsyncTopologyReplicaService.class);
+    private static final Logger logger = LoggerFactory.getLogger(FullAsyncTopologyReplicaService.class);
     @NotNull
     private final ReplicaInfo defaultReplicaInfo;
+    @NotNull
+    private final AsyncApiController asyncApiController;
+
 
     /**
      * Service for concurrent work with requests.
@@ -30,15 +30,18 @@ public class AsyncTopologyReplicaService extends BaseAsyncService {
      * @param workersCount - number workers in pool
      * @param queueSize    - size of task's queue
      */
-    public AsyncTopologyReplicaService(final int port,
-                                       @NotNull final DAO dao,
-                                       final int workersCount,
-                                       final int queueSize,
-                                       @NotNull final Topology<String> topology) throws IOException {
+    public FullAsyncTopologyReplicaService(final int port,
+                                           @NotNull final DAO dao,
+                                           final int workersCount,
+                                           final int queueSize,
+                                           @NotNull final Topology<String> topology) throws IOException {
         super(port, dao, workersCount, queueSize, topology, logger);
         assert workersCount > 0;
         assert queueSize > 0;
-        this.defaultReplicaInfo = ReplicaInfo.of(topology.getUniqueSize());
+        final int from = topology.getUniqueSize();
+        final int ack = from / 2 + 1;
+        this.defaultReplicaInfo = new ReplicaInfo(ack, from);
+        asyncApiController = new AsyncApiController(dao, topology, logger, executor);
     }
 
     /**
@@ -68,9 +71,9 @@ public class AsyncTopologyReplicaService extends BaseAsyncService {
                         return;
                     }
                 }
-                apiController.sendReplica(id, replicaInfo, session, request);
+                asyncApiController.sendReplica(id, replicaInfo, session, request);
             } else {
-                apiController.handleResponseLocal(id,
+                asyncApiController.handleResponseLocal(id,
                         session,
                         request);
             }

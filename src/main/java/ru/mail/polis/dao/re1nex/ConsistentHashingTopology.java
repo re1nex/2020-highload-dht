@@ -21,7 +21,7 @@ public class ConsistentHashingTopology implements Topology<String> {
     @NotNull
     private final String local;
     @NotNull
-    private final SortedMap<Integer, String> map = new TreeMap<>();
+    private final SortedMap<Long, String> map = new TreeMap<>();
 
     private final int uniqueSize;
 
@@ -38,7 +38,7 @@ public class ConsistentHashingTopology implements Topology<String> {
         for (final String node : nodes) {
             for (int i = 0; i < NUM_VIRTUAL_NODES; i++) {
                 final String newHash = node + i;
-                final int hash = calculateHash(newHash.getBytes(UTF_8));
+                final long hash = calculateHash(newHash.getBytes(UTF_8));
                 if (map.containsKey(hash)) {
                     throw new NoSuchAlgorithmException("Hash table already contains this key!");
                 }
@@ -67,8 +67,8 @@ public class ConsistentHashingTopology implements Topology<String> {
     @Override
     public String primaryFor(@NotNull final ByteBuffer key) throws NoSuchAlgorithmException {
         final byte[] keyByte = new byte[key.remaining()];
-        int hash = calculateHash(keyByte);
-        final SortedMap<Integer, String> tailMap = map.tailMap(hash);
+        long hash = calculateHash(keyByte);
+        final SortedMap<Long, String> tailMap = map.tailMap(hash);
         hash = tailMap.isEmpty() ? map.firstKey() : tailMap.firstKey();
         return map.get(hash);
     }
@@ -92,15 +92,15 @@ public class ConsistentHashingTopology implements Topology<String> {
     public Set<String> severalNodesForKey(@NotNull final ByteBuffer key,
                                           final int numNodes) throws NoSuchAlgorithmException {
         final byte[] keyByte = new byte[key.remaining()];
-        final int hash = calculateHash(keyByte);
-        final SortedMap<Integer, String> tailMap = map.tailMap(hash);
+        final long hash = calculateHash(keyByte);
+        final SortedMap<Long, String> tailMap = map.tailMap(hash);
         final SortedSet<String> nodes = new TreeSet<>();
         getNodesFromMap(tailMap, nodes, numNodes);
         getNodesFromMap(map, nodes, numNodes);
         return nodes;
     }
 
-    private void getNodesFromMap(@NotNull final Map<Integer, String> src,
+    private void getNodesFromMap(@NotNull final Map<Long, String> src,
                                  @NotNull final Set<String> dst,
                                  final int numNodes) {
         for (final String item : src.values()) {
@@ -111,13 +111,13 @@ public class ConsistentHashingTopology implements Topology<String> {
         }
     }
 
-    private static int calculateHash(final byte[] key) throws NoSuchAlgorithmException {
-        final MessageDigest instance = MessageDigest.getInstance("MD5");
+    private static long calculateHash(final byte[] key) throws NoSuchAlgorithmException {
+        final MessageDigest instance = MessageDigest.getInstance("SHA-256");
         instance.update(key);
         final byte[] digest = instance.digest();
 
-        int h = 0;
-        for (int i = 0; i < 4; i++) {
+        long h = 0;
+        for (int i = 0; i < 8; i++) {
             h <<= 8;
             h |= ((int) digest[i]) & 0xFF;
         }
