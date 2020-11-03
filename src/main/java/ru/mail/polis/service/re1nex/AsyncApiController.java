@@ -207,7 +207,11 @@ class AsyncApiController {
                         mergeResponse.mergeResponse(res),
                         logger);
             } else {
-                ApiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
+                if (err instanceof IllegalStateException) {
+                    ApiUtils.sendErrorResponse(session, Response.GATEWAY_TIMEOUT, logger);
+                } else {
+                    ApiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
+                }
             }
         });
         if (completableFuture.isCancelled()) {
