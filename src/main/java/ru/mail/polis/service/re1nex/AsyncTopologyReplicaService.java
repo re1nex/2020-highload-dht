@@ -59,6 +59,7 @@ public class AsyncTopologyReplicaService extends BaseService {
      * @param dao          - DAO impl
      * @param workersCount - number workers in pool
      * @param queueSize    - size of task's queue
+     * @return a AsyncTopologyReplicaService instance
      */
     public static BaseService createService(final int port,
                                    @NotNull final DAO dao,

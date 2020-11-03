@@ -21,7 +21,7 @@ final class ResponseBuilder {
                     @Nullable final byte[] value) {
         this.isTombstone = isTombstone;
         this.generation = generation;
-        this.value = value;
+        this.value = value == null ? null : value.clone();
         this.resultCode = resultCode;
         this.onlyStatus = false;
     }
