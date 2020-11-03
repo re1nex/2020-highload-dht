@@ -95,14 +95,14 @@ class ApiControllerImpl extends ApiController {
                                     @NotNull final HttpSession session,
                                     @NotNull final Request request) {
         switch (request.getMethod()) {
-            case Request.METHOD_GET:
-                ApiUtils.sendResponse(session, get(id), logger);
+            case Request.METHOD_DELETE:
+                ApiUtils.sendResponse(session, delete(id), logger);
                 break;
             case Request.METHOD_PUT:
                 ApiUtils.sendResponse(session, put(id, request), logger);
                 break;
-            case Request.METHOD_DELETE:
-                ApiUtils.sendResponse(session, delete(id), logger);
+            case Request.METHOD_GET:
+                ApiUtils.sendResponse(session, get(id), logger);
                 break;
             default:
                 break;

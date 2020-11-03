@@ -165,7 +165,7 @@ class AsyncApiControllerImpl extends ApiController {
                         responses,
                         responseBuilders ->
                                 MergeUtils.mergePutDeleteResponses(responseBuilders.stream()
-                                                .map(ResponseBuilder -> new Response(ResponseBuilder.getResponse()))
+                                                .map(responseBuilder -> new Response(responseBuilder.getResponse()))
                                                 .collect(Collectors.toList()),
                                         ack,
                                         false),
@@ -183,7 +183,7 @@ class AsyncApiControllerImpl extends ApiController {
                         responses,
                         responseBuilders ->
                                 MergeUtils.mergePutDeleteResponses(responseBuilders.stream()
-                                                .map(ResponseBuilder -> new Response(ResponseBuilder.getResponse()))
+                                                .map(responseBuilder -> new Response(responseBuilder.getResponse()))
                                                 .collect(Collectors.toList()),
                                         ack,
                                         true),
