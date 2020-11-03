@@ -17,7 +17,7 @@ class GetBodyHandler implements HttpResponse.BodyHandler<ResponseBuilder> {
                 if (generation.isEmpty()) {
                     throw new IllegalStateException("No generation in header");
                 }
-                if (responseInfo.headers().firstValue(ApiUtils.TOMBSTONE).isEmpty()) {
+                if (responseInfo.headers().firstValue(ApiUtils.TOMBSTONE).isPresent()) {
                     return HttpResponse.BodySubscribers.replacing(
                             new ResponseBuilder(Response.OK, Long.parseLong(generation.get()), true
                             ));

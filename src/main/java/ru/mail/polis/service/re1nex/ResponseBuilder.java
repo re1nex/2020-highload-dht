@@ -11,7 +11,7 @@ final class ResponseBuilder {
     private final byte[] value;
     @NotNull
     private final String resultCode;
-    private Response response;
+    private boolean onlyStatus;
 
     ResponseBuilder(@NotNull String resultCode, long generation, boolean isTombstone,
                     @Nullable byte[] value) {
@@ -19,11 +19,7 @@ final class ResponseBuilder {
         this.generation = generation;
         this.value = value;
         this.resultCode = resultCode;
-    }
-
-    ResponseBuilder(Response response) {
-        this(response.getHeaders()[0], 0, false, null);
-        this.response = response;
+        this.onlyStatus = false;
     }
 
     public int getStatus() {
@@ -34,7 +30,7 @@ final class ResponseBuilder {
 
     ResponseBuilder(@NotNull String resultCode, long generation,
                     @Nullable byte[] value) {
-        this(resultCode, generation, value == null, null);
+        this(resultCode, generation, value == null, value);
     }
 
     ResponseBuilder(@NotNull String resultCode, long generation, boolean isTombstone) {
@@ -43,23 +39,19 @@ final class ResponseBuilder {
 
     ResponseBuilder(@NotNull String resultCode) {
         this(resultCode, 0, false, null);
+        this.onlyStatus = true;
     }
 
     @NotNull
     Response getResponse() {
-        if (this.response != null) {
-            return this.response;
-        }
         final Response response;
-        if (resultCode.equals(Response.NOT_FOUND)
-                || resultCode.equals(Response.CREATED)
-                || resultCode.equals(Response.ACCEPTED)) {
+        if (onlyStatus) {
             return new Response(resultCode, Response.EMPTY);
         } else if (isTombstone) {
-            response = new Response(resultCode, Response.EMPTY);
-            response.addHeader(ApiUtils.TOMBSTONE+": True");
+            response = new Response(Response.OK, Response.EMPTY);
+            response.addHeader(ApiUtils.TOMBSTONE + ": True");
         } else {
-            response = new Response(resultCode, value);
+            response = new Response(Response.OK, value);
         }
         response.addHeader(ApiUtils.GENERATION + ": " + generation);
         return response;

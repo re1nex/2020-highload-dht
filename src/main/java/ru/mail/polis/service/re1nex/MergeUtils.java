@@ -26,7 +26,7 @@ final class MergeUtils {
                 numNotFoundResponses++;
             } else if (response.getStatus() == 200) {
                 final long generation = Long.parseLong(response.getHeader(ApiUtils.GENERATION));
-                if (lastGeneration < generation || lastGeneration == 0) {
+                if (lastGeneration > generation || lastGeneration == 0) {
                     lastGeneration = generation;
                     if (response.getHeader(ApiUtils.TOMBSTONE) == null) {
                         lastTombstone = false;
@@ -56,13 +56,13 @@ final class MergeUtils {
                 numNotFoundResponses++;
             } else if (response.getStatus() == 200) {
                 final long generation = response.getGeneration();
-                if (lastGeneration < generation || lastGeneration == 0) {
+                if (lastGeneration > generation || lastGeneration == 0) {
                     lastGeneration = generation;
                     if (response.isTombstone()) {
                         lastTombstone = true;
-                        last = response;
                     } else {
                         lastTombstone = false;
+                        last = response;
                     }
                 }
             }
