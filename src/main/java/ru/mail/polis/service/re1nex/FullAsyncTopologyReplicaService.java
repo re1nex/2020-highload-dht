@@ -17,7 +17,7 @@ public class FullAsyncTopologyReplicaService extends BaseService {
     private static final Logger logger = LoggerFactory.getLogger(FullAsyncTopologyReplicaService.class);
 
     /**
-     * Service for concurrent work with requests.
+     * Asynchronous service for concurrent work with replicas for requests.
      *
      * @param port         - Server port
      * @param dao          - DAO impl

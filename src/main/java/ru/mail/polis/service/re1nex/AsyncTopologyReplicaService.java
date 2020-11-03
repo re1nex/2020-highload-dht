@@ -22,7 +22,7 @@ public class AsyncTopologyReplicaService extends BaseService {
     protected final Map<String, HttpClient> nodeToClient;
 
     /**
-     * Service for concurrent work with requests.
+     * Service for concurrent work with replicas for requests.
      *
      * @param port         - Server port
      * @param dao          - DAO impl
@@ -54,8 +54,13 @@ public class AsyncTopologyReplicaService extends BaseService {
 
     /*
     Create nodeToClient for AsyncTopologyReplicaService and AsyncTopologyReplicaService.
+
+     * @param port         - Server port
+     * @param dao          - DAO impl
+     * @param workersCount - number workers in pool
+     * @param queueSize    - size of task's queue
      */
-    public static BaseService getInstance(final int port,
+    public static BaseService createService(final int port,
                                    @NotNull final DAO dao,
                                    final int workersCount,
                                    final int queueSize,

@@ -128,6 +128,23 @@ class AsyncApiControllerImpl extends ApiController {
         }
     }
 
+    private void handleResponses(@NotNull final Set<String> nodes,
+                                 @NotNull final List<CompletableFuture<ResponseBuilder>> responses,
+                                 @NotNull final LocalResponse response,
+                                 @NotNull final RequestBuilder requestBuilder,
+                                 @NotNull final HttpResponse.BodyHandler<ResponseBuilder> handler) {
+        if (topology.removeLocal(nodes)) {
+            responses.add(response.handleLocalResponse());
+        }
+        for (final String node : nodes) {
+            final HttpRequest request = requestBuilder.requestBuild(node);
+            final CompletableFuture<ResponseBuilder> responseCompletableFuture =
+                    client.sendAsync(request, handler)
+                            .thenApplyAsync(HttpResponse::body, executor);
+            responses.add(responseCompletableFuture);
+        }
+    }
+
     @Override
     protected void put(@NotNull final String id,
                        @NotNull final HttpSession session,
@@ -135,16 +152,24 @@ class AsyncApiControllerImpl extends ApiController {
         ApiUtils.sendResponse(session, put(id, request), logger);
     }
 
+    private CompletableFuture<ResponseBuilder> put(@NotNull final String id,
+                                                   @NotNull final Request request) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                dao.upsert(ByteBufferUtils.getByteBufferKey(id), ByteBuffer.wrap(request.getBody()));
+                return new ResponseBuilder(Response.CREATED);
+            } catch (IOException e) {
+                logger.error("PUT failed! Cannot put the element: {}. Request size: {}. Cause: {}",
+                        id, request.getBody().length, e.getCause());
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
     @Override
     protected void get(@NotNull final String id,
                        @NotNull final HttpSession session) {
         ApiUtils.sendResponse(session, get(id), logger);
-    }
-
-    @Override
-    protected void delete(@NotNull final String id,
-                          @NotNull final HttpSession session) {
-        ApiUtils.sendResponse(session, delete(id), logger);
     }
 
     private CompletableFuture<ResponseBuilder> get(@NotNull final String id) {
@@ -167,18 +192,10 @@ class AsyncApiControllerImpl extends ApiController {
         }, executor);
     }
 
-    private CompletableFuture<ResponseBuilder> put(@NotNull final String id,
-                                                   @NotNull final Request request) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                dao.upsert(ByteBufferUtils.getByteBufferKey(id), ByteBuffer.wrap(request.getBody()));
-                return new ResponseBuilder(Response.CREATED);
-            } catch (IOException e) {
-                logger.error("PUT failed! Cannot put the element: {}. Request size: {}. Cause: {}",
-                        id, request.getBody().length, e.getCause());
-                throw new RuntimeException(e);
-            }
-        });
+    @Override
+    protected void delete(@NotNull final String id,
+                          @NotNull final HttpSession session) {
+        ApiUtils.sendResponse(session, delete(id), logger);
     }
 
     private CompletableFuture<ResponseBuilder> delete(@NotNull final String id) {
@@ -214,23 +231,6 @@ class AsyncApiControllerImpl extends ApiController {
                 });
         if (completableFuture.isCancelled()) {
             logger.error("future was cancelled");
-        }
-    }
-
-    private void handleResponses(@NotNull final Set<String> nodes,
-                                 @NotNull final List<CompletableFuture<ResponseBuilder>> responses,
-                                 @NotNull final LocalResponse response,
-                                 @NotNull final RequestBuilder requestBuilder,
-                                 @NotNull final HttpResponse.BodyHandler<ResponseBuilder> handler) {
-        if (topology.removeLocal(nodes)) {
-            responses.add(response.handleLocalResponse());
-        }
-        for (final String node : nodes) {
-            final HttpRequest request = requestBuilder.requestBuild(node);
-            final CompletableFuture<ResponseBuilder> responseCompletableFuture =
-                    client.sendAsync(request, handler)
-                            .thenApplyAsync(HttpResponse::body, executor);
-            responses.add(responseCompletableFuture);
         }
     }
 }

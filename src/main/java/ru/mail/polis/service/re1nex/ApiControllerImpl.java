@@ -46,7 +46,6 @@ class ApiControllerImpl extends ApiController {
         }
     }
 
-
     @Override
     protected void handleResponses(@NotNull final String id,
                                    @NotNull final HttpSession session,
@@ -84,35 +83,6 @@ class ApiControllerImpl extends ApiController {
         }
     }
 
-    @Override
-    protected void put(@NotNull final String id,
-                       @NotNull final HttpSession session,
-                       @NotNull final Request request) {
-        ApiUtils.sendResponse(session, put(id, request), logger);
-    }
-
-    @Override
-    protected void get(@NotNull final String id,
-                       @NotNull final HttpSession session) {
-        ApiUtils.sendResponse(session, get(id), logger);
-    }
-
-    @Override
-    protected void delete(@NotNull final String id,
-                          @NotNull final HttpSession session) {
-        ApiUtils.sendResponse(session, delete(id), logger);
-    }
-
-    @Override
-    public void sendReplica(@NotNull final String id,
-                            @NotNull final ReplicaInfo replicaInfo,
-                            @NotNull final HttpSession session,
-                            @NotNull final Request oldRequest) {
-        final Request request = new Request(oldRequest);
-        request.addHeader(ApiUtils.PROXY_FOR);
-        super.sendReplica(id, replicaInfo, session, request);
-    }
-
     private void handleResponses(@NotNull final Set<String> nodes,
                                  @NotNull final List<Response> responses,
                                  @NotNull final Request request,
@@ -123,6 +93,12 @@ class ApiControllerImpl extends ApiController {
         for (final String node : nodes) {
             responses.add(proxy(node, request));
         }
+    }
+
+    @Override
+    protected void get(@NotNull final String id,
+                       @NotNull final HttpSession session) {
+        ApiUtils.sendResponse(session, get(id), logger);
     }
 
     private Response get(@NotNull final String id) {
@@ -146,6 +122,13 @@ class ApiControllerImpl extends ApiController {
         }
     }
 
+    @Override
+    protected void put(@NotNull final String id,
+                       @NotNull final HttpSession session,
+                       @NotNull final Request request) {
+        ApiUtils.sendResponse(session, put(id, request), logger);
+    }
+
     private Response put(@NotNull final String id,
                          @NotNull final Request request) {
         try {
@@ -158,6 +141,12 @@ class ApiControllerImpl extends ApiController {
         }
     }
 
+    @Override
+    protected void delete(@NotNull final String id,
+                          @NotNull final HttpSession session) {
+        ApiUtils.sendResponse(session, delete(id), logger);
+    }
+
     private Response delete(@NotNull final String id) {
         try {
             dao.remove(ByteBufferUtils.getByteBufferKey(id));
@@ -167,6 +156,16 @@ class ApiControllerImpl extends ApiController {
                     id, e.getMessage(), e);
             return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
         }
+    }
+
+    @Override
+    public void sendReplica(@NotNull final String id,
+                            @NotNull final ReplicaInfo replicaInfo,
+                            @NotNull final HttpSession session,
+                            @NotNull final Request oldRequest) {
+        final Request request = new Request(oldRequest);
+        request.addHeader(ApiUtils.PROXY_FOR);
+        super.sendReplica(id, replicaInfo, session, request);
     }
 
     interface LocalResponse {

@@ -45,7 +45,7 @@ final class ApiUtils {
     }
 
     static void sendResponse(@NotNull final HttpSession session,
-                             @NotNull CompletableFuture<ResponseBuilder> responseCompletableFuture,
+                             @NotNull final CompletableFuture<ResponseBuilder> responseCompletableFuture,
                              @NotNull final Logger logger) {
         final CompletableFuture<ResponseBuilder> completableFuture
                 = responseCompletableFuture.whenComplete((response, throwable) -> {
