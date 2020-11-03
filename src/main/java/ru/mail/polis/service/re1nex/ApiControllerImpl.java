@@ -91,25 +91,6 @@ class ApiControllerImpl extends ApiController {
     }
 
     @Override
-    public void handleResponseLocal(@NotNull final String id,
-                                    @NotNull final HttpSession session,
-                                    @NotNull final Request request) {
-        switch (request.getMethod()) {
-            case Request.METHOD_DELETE:
-                ApiUtils.sendResponse(session, delete(id), logger);
-                break;
-            case Request.METHOD_PUT:
-                ApiUtils.sendResponse(session, put(id, request), logger);
-                break;
-            case Request.METHOD_GET:
-                ApiUtils.sendResponse(session, get(id), logger);
-                break;
-            default:
-                break;
-        }
-    }
-
-    @Override
     protected void handleResponses(@NotNull final String id,
                                    @NotNull final HttpSession session,
                                    @NotNull final Request request,
@@ -144,6 +125,21 @@ class ApiControllerImpl extends ApiController {
             default:
                 break;
         }
+    }
+
+    @Override
+    protected void put(@NotNull String id, @NotNull HttpSession session, @NotNull Request request) {
+        ApiUtils.sendResponse(session, put(id, request), logger);
+    }
+
+    @Override
+    protected void get(@NotNull String id, @NotNull HttpSession session) {
+        ApiUtils.sendResponse(session, get(id), logger);
+    }
+
+    @Override
+    protected void delete(@NotNull String id, @NotNull HttpSession session) {
+        ApiUtils.sendResponse(session, delete(id), logger);
     }
 
     @Override

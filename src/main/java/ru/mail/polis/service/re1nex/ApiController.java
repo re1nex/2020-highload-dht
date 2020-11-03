@@ -40,14 +40,39 @@ abstract class ApiController {
         handleResponses(id, session, request, ack, nodes);
     }
 
-    abstract void handleResponseLocal(@NotNull final String id,
-                                      @NotNull final HttpSession session,
-                                      @NotNull final Request request);
+    void handleResponseLocal(@NotNull final String id,
+                             @NotNull final HttpSession session,
+                             @NotNull final Request request) {
+        switch (request.getMethod()) {
+            case Request.METHOD_GET:
+                get(id, session);
+                break;
+            case Request.METHOD_PUT:
+                put(id, session, request);
+                break;
+            case Request.METHOD_DELETE:
+                delete(id, session);
+                break;
+            default:
+                break;
+        }
+    }
 
     protected abstract void handleResponses(@NotNull final String id,
                                             @NotNull final HttpSession session,
                                             @NotNull final Request request,
                                             final int ack,
                                             @NotNull final Set<String> nodes);
+
+    protected abstract void put(@NotNull final String id,
+                                @NotNull final HttpSession session,
+                                @NotNull final Request request);
+
+    protected abstract void get(@NotNull final String id,
+                                @NotNull final HttpSession session);
+
+    protected abstract void delete(@NotNull final String id,
+                                   @NotNull final HttpSession session);
+
 
 }
