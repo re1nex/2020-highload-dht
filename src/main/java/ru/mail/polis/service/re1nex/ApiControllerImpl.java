@@ -14,31 +14,25 @@ import ru.mail.polis.dao.re1nex.Value;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-class ApiControllerImpl implements ApiController{
+class ApiControllerImpl extends ApiController {
     @NotNull
     private final DAO dao;
     @NotNull
-    private final Topology<String> topology;
-    @NotNull
     private final Map<String, HttpClient> nodeToClient;
-    @NotNull
-    private final Logger logger;
 
     ApiControllerImpl(@NotNull final DAO dao,
                       @NotNull final Topology<String> topology,
                       @NotNull final Map<String, HttpClient> nodeToClient,
                       @NotNull final Logger logger) {
+        super(topology, logger);
         this.dao = dao;
-        this.topology = topology;
         this.nodeToClient = nodeToClient;
-        this.logger = logger;
     }
 
     @NotNull
@@ -47,7 +41,7 @@ class ApiControllerImpl implements ApiController{
         try {
             return nodeToClient.get(node).invoke(request);
         } catch (IOException | InterruptedException | HttpException | PoolException e) {
-           logger.error(ApiUtils.RESPONSE_ERROR, e);
+            logger.error(ApiUtils.RESPONSE_ERROR, e);
             return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
         }
     }
@@ -116,24 +110,12 @@ class ApiControllerImpl implements ApiController{
     }
 
     @Override
-    public void sendReplica(@NotNull final String id,
-                     @NotNull final ReplicaInfo replicaInfo,
-                     @NotNull final HttpSession session,
-                     @NotNull final Request oldRequest) {
-        final Request request = new Request(oldRequest);
-        request.addHeader(ApiUtils.PROXY_FOR);
-        final int from = replicaInfo.getFrom();
-        final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
-        final Set<String> nodes;
-        try {
-            nodes = topology.severalNodesForKey(key, from);
-        } catch (NoSuchAlgorithmException e) {
-            logger.error("Can't get hash", e);
-            ApiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
-            return;
-        }
+    protected void handleResponses(@NotNull final String id,
+                                   @NotNull final HttpSession session,
+                                   @NotNull final Request request,
+                                   final int ack,
+                                   @NotNull final Set<String> nodes) {
         final List<Response> responses = new ArrayList<>();
-        final int ack = replicaInfo.getAck();
         switch (request.getMethod()) {
             case Request.METHOD_GET:
                 handleResponses(nodes,
@@ -162,6 +144,16 @@ class ApiControllerImpl implements ApiController{
             default:
                 break;
         }
+    }
+
+    @Override
+    public void sendReplica(@NotNull final String id,
+                            @NotNull final ReplicaInfo replicaInfo,
+                            @NotNull final HttpSession session,
+                            @NotNull final Request oldRequest) {
+        final Request request = new Request(oldRequest);
+        request.addHeader(ApiUtils.PROXY_FOR);
+        super.sendReplica(id, replicaInfo, session, request);
     }
 
     private void handleResponses(@NotNull final Set<String> nodes,

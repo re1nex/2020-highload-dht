@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
-import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,13 +26,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-class AsyncApiControllerImpl implements ApiController {
+class AsyncApiControllerImpl extends ApiController {
     @NotNull
     private final DAO dao;
-    @NotNull
-    private final Topology<String> topology;
-    @NotNull
-    private final Logger logger;
     @NotNull
     private final java.net.http.HttpClient client;
     @NotNull
@@ -55,9 +50,8 @@ class AsyncApiControllerImpl implements ApiController {
                            @NotNull final Topology<String> topology,
                            @NotNull final Logger logger,
                            @NotNull final ExecutorService executor) {
+        super(topology, logger);
         this.dao = dao;
-        this.topology = topology;
-        this.logger = logger;
         this.executor = executor;
         final Executor clientExecutor =
                 Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),
@@ -139,22 +133,12 @@ class AsyncApiControllerImpl implements ApiController {
     }
 
     @Override
-    public void sendReplica(@NotNull final String id,
-                     @NotNull final ReplicaInfo replicaInfo,
-                     @NotNull final HttpSession session,
-                     @NotNull final Request request) {
-        final int from = replicaInfo.getFrom();
-        final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
-        final Set<String> nodes;
-        try {
-            nodes = topology.severalNodesForKey(key, from);
-        } catch (NoSuchAlgorithmException e) {
-            logger.error("Can't get hash", e);
-            ApiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
-            return;
-        }
+    protected void handleResponses(@NotNull final String id,
+                                   @NotNull final HttpSession session,
+                                   @NotNull final Request request,
+                                   final int ack,
+                                   @NotNull final Set<String> nodes ){
         final List<CompletableFuture<ResponseBuilder>> responses = new ArrayList<>();
-        final int ack = replicaInfo.getAck();
         switch (request.getMethod()) {
             case Request.METHOD_GET:
                 handleResponses(nodes,
