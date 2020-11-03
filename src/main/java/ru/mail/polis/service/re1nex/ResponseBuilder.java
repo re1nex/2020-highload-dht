@@ -4,6 +4,8 @@ import one.nio.http.Response;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 final class ResponseBuilder {
     private final boolean isTombstone;
     private final long generation;
@@ -13,8 +15,10 @@ final class ResponseBuilder {
     private final String resultCode;
     private boolean onlyStatus;
 
-    ResponseBuilder(@NotNull String resultCode, long generation, boolean isTombstone,
-                    @Nullable byte[] value) {
+    ResponseBuilder(@NotNull final String resultCode,
+                    final long generation,
+                    final boolean isTombstone,
+                    @Nullable final byte[] value) {
         this.isTombstone = isTombstone;
         this.generation = generation;
         this.value = value;
@@ -27,17 +31,19 @@ final class ResponseBuilder {
         return (s.charAt(0) * 100) + (s.charAt(1) * 10) + s.charAt(2) - ('0' * 111);
     }
 
-
-    ResponseBuilder(@NotNull String resultCode, long generation,
-                    @Nullable byte[] value) {
+    ResponseBuilder(@NotNull final String resultCode,
+                    final long generation,
+                    @Nullable final byte[] value) {
         this(resultCode, generation, value == null, value);
     }
 
-    ResponseBuilder(@NotNull String resultCode, long generation, boolean isTombstone) {
+    ResponseBuilder(@NotNull final String resultCode,
+                    final long generation,
+                    final boolean isTombstone) {
         this(resultCode, generation, isTombstone, null);
     }
 
-    ResponseBuilder(@NotNull String resultCode) {
+    ResponseBuilder(@NotNull final String resultCode) {
         this(resultCode, 0, false, null);
         this.onlyStatus = true;
     }
@@ -51,7 +57,7 @@ final class ResponseBuilder {
             response = new Response(Response.OK, Response.EMPTY);
             response.addHeader(ApiUtils.TOMBSTONE + ": True");
         } else {
-            response = new Response(Response.OK, value);
+            response = new Response(Response.OK, Objects.requireNonNull(value));
         }
         response.addHeader(ApiUtils.GENERATION + ": " + generation);
         return response;
@@ -67,12 +73,6 @@ final class ResponseBuilder {
 
     @Nullable
     public byte[] getValue() {
-        return value;
+        return value == null ? null : value.clone();
     }
-
-    @NotNull
-    public String getResultCode() {
-        return resultCode;
-    }
-
 }

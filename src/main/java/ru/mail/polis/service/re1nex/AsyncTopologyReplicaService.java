@@ -1,10 +1,7 @@
 package ru.mail.polis.service.re1nex;
 
-import one.nio.http.HttpSession;
-import one.nio.http.Param;
-import one.nio.http.Path;
-import one.nio.http.Request;
-import one.nio.http.Response;
+import one.nio.http.HttpClient;
+import one.nio.net.ConnectionString;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,15 +9,17 @@ import ru.mail.polis.dao.DAO;
 import ru.mail.polis.dao.re1nex.Topology;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * AsyncTopologyService provides asynchronous service with methods for work with shading systems with replicas.
  */
-public class AsyncTopologyReplicaService extends BaseAsyncService {
+public class AsyncTopologyReplicaService extends BaseService {
     @NotNull
     private static final Logger logger = LoggerFactory.getLogger(AsyncTopologyReplicaService.class);
     @NotNull
-    private final ReplicaInfo defaultReplicaInfo;
+    protected final Map<String, HttpClient> nodeToClient;
 
     /**
      * Service for concurrent work with requests.
@@ -34,46 +33,44 @@ public class AsyncTopologyReplicaService extends BaseAsyncService {
                                        @NotNull final DAO dao,
                                        final int workersCount,
                                        final int queueSize,
-                                       @NotNull final Topology<String> topology) throws IOException {
-        super(port, dao, workersCount, queueSize, topology, logger);
-        assert workersCount > 0;
-        assert queueSize > 0;
-        this.defaultReplicaInfo = ReplicaInfo.of(topology.getUniqueSize());
+                                       @NotNull final Topology<String> topology,
+                                       @NotNull final Map<String, HttpClient> nodeToClient) throws IOException {
+        super(port,
+                workersCount,
+                queueSize,
+                logger,
+                executors -> new ApiControllerImpl(dao, topology, nodeToClient, logger),
+                topology);
+        this.nodeToClient = nodeToClient;
     }
 
-    /**
-     * Provide requests for AsyncTopologyReplicaService.
-     */
-    @Path("/v0/entity")
-    public void handleRequest(@Param(value = "id", required = true) final String id,
-                              @Param("replicas") final String replicas,
-                              @NotNull final HttpSession session,
-                              @NotNull final Request request) {
-        executeTask(() -> {
-            if (id.isEmpty()) {
-                logger.info("Id is empty!");
-                ApiUtils.sendErrorResponse(session, Response.BAD_REQUEST, logger);
-                return;
-            }
-            if (request.getHeader(ApiUtils.PROXY_FOR) == null) {
-                final ReplicaInfo replicaInfo;
-                if (replicas == null) {
-                    replicaInfo = defaultReplicaInfo;
-                } else {
-                    try {
-                        replicaInfo = ReplicaInfo.of(replicas);
-                    } catch (IllegalArgumentException exception) {
-                        logger.info("Wrong params replica", exception);
-                        ApiUtils.sendResponse(session, new Response(Response.BAD_REQUEST, Response.EMPTY), logger);
-                        return;
-                    }
+    @Override
+    public synchronized void stop() {
+        super.stop();
+        for (final HttpClient client : nodeToClient.values()) {
+            client.clear();
+        }
+    }
+
+    public static BaseService getInstance(final int port,
+                                   @NotNull final DAO dao,
+                                   final int workersCount,
+                                   final int queueSize,
+                                   @NotNull final Topology<String> topology) throws IOException {
+        final Map<String, HttpClient> nodeToClient = new HashMap<>();
+        for (final String node : topology.all()) {
+            if (!topology.isLocal(node)) {
+                final HttpClient client = new HttpClient(new ConnectionString(node + "?timeout=1000"));
+                if (nodeToClient.put(node, client) != null) {
+                    throw new IllegalStateException("Duplicate node");
                 }
-                apiController.sendReplica(id, replicaInfo, session, request);
-            } else {
-                apiController.handleResponseLocal(id,
-                        session,
-                        request);
             }
-        }, session);
+        }
+        return new AsyncTopologyReplicaService(port,
+                dao,
+                workersCount,
+                queueSize,
+                topology,
+                nodeToClient);
     }
 }

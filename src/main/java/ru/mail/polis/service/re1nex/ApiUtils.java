@@ -18,23 +18,21 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
 final class ApiUtils {
-    private ApiUtils() {
-    }
-
     @NonNull
     static final String RESPONSE_ERROR = "Can't send response error";
     @NotNull
     static final String NOT_ENOUGH_REPLICAS = "504 Not Enough Replicas";
-
     @NotNull
     static final String GENERATION = "generation";
     @NotNull
     static final String TOMBSTONE = "tombstone";
     @NotNull
     static final String PROXY_FOR = "X-Proxy-For: ";
-
     @NotNull
     static final String PROXY_FOR_CLIENT = "X-Proxy-For";
+
+    private ApiUtils() {
+    }
 
     static void sendResponse(@NotNull final HttpSession session,
                              @NotNull final Response response,
@@ -49,14 +47,15 @@ final class ApiUtils {
     static void sendResponse(@NotNull final HttpSession session,
                              @NotNull CompletableFuture<ResponseBuilder> responseCompletableFuture,
                              @NotNull final Logger logger) {
-        final CompletableFuture<ResponseBuilder> completableFuture = responseCompletableFuture.whenComplete((response, throwable) -> {
+        final CompletableFuture<ResponseBuilder> completableFuture
+                = responseCompletableFuture.whenComplete((response, throwable) -> {
             if (throwable == null) {
                 sendResponse(session, response.getResponse(), logger);
             } else {
                 sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
             }
         });
-        if(completableFuture.isCancelled()){
+        if (completableFuture.isCancelled()) {
             logger.error("future is cancelled");
         }
     }
@@ -75,7 +74,8 @@ final class ApiUtils {
             @NotNull final String node,
             @NotNull final Request request,
             @NotNull final HttpSession session,
-            @NotNull final HttpClient client, Logger logger) {
+            @NotNull final HttpClient client,
+            @NotNull final Logger logger) {
         try {
             request.addHeader(PROXY_FOR + node);
             sendResponse(session, client.invoke(request), logger);

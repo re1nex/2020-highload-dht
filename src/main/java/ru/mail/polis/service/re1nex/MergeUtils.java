@@ -105,22 +105,6 @@ final class MergeUtils {
         return new Response(isPut ? Response.CREATED : Response.ACCEPTED, Response.EMPTY);
     }
 
-    static Response mergePutDeleteResponseBuilders(@NotNull final Collection<ResponseBuilder> responses,
-                                                   final int ack,
-                                                   final boolean isPut) {
-        int numResponses = 0;
-        final int statusOk = isPut ? 201 : 202;
-        for (final ResponseBuilder response : responses) {
-            if (response.getStatus() == statusOk) {
-                numResponses++;
-            }
-        }
-        if (numResponses < ack) {
-            return new Response(ApiUtils.NOT_ENOUGH_REPLICAS, Response.EMPTY);
-        }
-        return new Response(isPut ? Response.CREATED : Response.ACCEPTED, Response.EMPTY);
-    }
-
     @NotNull
     static <T> CompletableFuture<Collection<T>> collateFutures(@NotNull final Collection<CompletableFuture<T>> futures,
                                                                final int ack) {

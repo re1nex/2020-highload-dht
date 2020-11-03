@@ -25,8 +25,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
-class AsyncApiController {
+class AsyncApiControllerImpl implements ApiController {
     @NotNull
     private final DAO dao;
     @NotNull
@@ -50,10 +51,10 @@ class AsyncApiController {
         Response mergeResponse(@NotNull final Collection<ResponseBuilder> responses);
     }
 
-    AsyncApiController(@NotNull final DAO dao,
-                       @NotNull final Topology<String> topology,
-                       @NotNull final Logger logger,
-                       @NotNull final ExecutorService executor) {
+    AsyncApiControllerImpl(@NotNull final DAO dao,
+                           @NotNull final Topology<String> topology,
+                           @NotNull final Logger logger,
+                           @NotNull final ExecutorService executor) {
         this.dao = dao;
         this.topology = topology;
         this.logger = logger;
@@ -79,7 +80,8 @@ class AsyncApiController {
                 if (value.isTombstone()) {
                     return new ResponseBuilder(Response.OK, value.getTimestamp(), true);
                 } else {
-                    return new ResponseBuilder(Response.OK, value.getTimestamp(), ByteBufferUtils.byteBufferToByte(value.getData()));
+                    return new ResponseBuilder(Response.OK, value.getTimestamp(),
+                            ByteBufferUtils.byteBufferToByte(value.getData()));
                 }
             } catch (NoSuchElementException e) {
                 return new ResponseBuilder(Response.NOT_FOUND);
@@ -117,9 +119,10 @@ class AsyncApiController {
         });
     }
 
-    void handleResponseLocal(@NotNull final String id,
-                             @NotNull final HttpSession session,
-                             @NotNull final Request request) {
+    @Override
+    public void handleResponseLocal(@NotNull final String id,
+                                    @NotNull final HttpSession session,
+                                    @NotNull final Request request) {
         switch (request.getMethod()) {
             case Request.METHOD_GET:
                 ApiUtils.sendResponse(session, get(id), logger);
@@ -135,7 +138,8 @@ class AsyncApiController {
         }
     }
 
-    void sendReplica(@NotNull final String id,
+    @Override
+    public void sendReplica(@NotNull final String id,
                      @NotNull final ReplicaInfo replicaInfo,
                      @NotNull final HttpSession session,
                      @NotNull final Request request) {
@@ -175,7 +179,12 @@ class AsyncApiController {
                         new PutDeleteBodyHandler());
                 mergeAndSendResponse(session,
                         responses,
-                        responseBuilders -> MergeUtils.mergePutDeleteResponseBuilders(responseBuilders, ack, false),
+                        responseBuilders ->
+                                MergeUtils.mergePutDeleteResponses(responseBuilders.stream()
+                                                .map(ResponseBuilder -> new Response(ResponseBuilder.getResponse()))
+                                                .collect(Collectors.toList()),
+                                        ack,
+                                        false),
                         ack);
                 break;
             case Request.METHOD_PUT:
@@ -188,7 +197,12 @@ class AsyncApiController {
                         new PutDeleteBodyHandler());
                 mergeAndSendResponse(session,
                         responses,
-                        responseBuilders -> MergeUtils.mergePutDeleteResponseBuilders(responseBuilders, ack, true),
+                        responseBuilders ->
+                                MergeUtils.mergePutDeleteResponses(responseBuilders.stream()
+                                                .map(ResponseBuilder -> new Response(ResponseBuilder.getResponse()))
+                                                .collect(Collectors.toList()),
+                                        ack,
+                                        true),
                         ack);
                 break;
             default:
@@ -196,24 +210,24 @@ class AsyncApiController {
         }
     }
 
-
     private void mergeAndSendResponse(@NotNull final HttpSession session,
-                                      @NotNull List<CompletableFuture<ResponseBuilder>> responses,
+                                      @NotNull final List<CompletableFuture<ResponseBuilder>> responses,
                                       @NotNull final MergeResponse mergeResponse,
                                       final int ack) {
-        CompletableFuture<Collection<ResponseBuilder>> completableFuture = MergeUtils.collateFutures(responses, ack).whenComplete((res, err) -> {
-            if (err == null) {
-                ApiUtils.sendResponse(session,
-                        mergeResponse.mergeResponse(res),
-                        logger);
-            } else {
-                if (err instanceof IllegalStateException) {
-                    ApiUtils.sendErrorResponse(session, Response.GATEWAY_TIMEOUT, logger);
-                } else {
-                    ApiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
-                }
-            }
-        });
+        final CompletableFuture<Collection<ResponseBuilder>> completableFuture =
+                MergeUtils.collateFutures(responses, ack).whenComplete((res, err) -> {
+                    if (err == null) {
+                        ApiUtils.sendResponse(session,
+                                mergeResponse.mergeResponse(res),
+                                logger);
+                    } else {
+                        if (err instanceof IllegalStateException) {
+                            ApiUtils.sendErrorResponse(session, Response.GATEWAY_TIMEOUT, logger);
+                        } else {
+                            ApiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
+                        }
+                    }
+                });
         if (completableFuture.isCancelled()) {
             logger.error("future was cancelled");
         }
