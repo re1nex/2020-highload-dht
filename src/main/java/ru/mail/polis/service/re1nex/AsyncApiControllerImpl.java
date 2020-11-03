@@ -66,53 +66,6 @@ class AsyncApiControllerImpl extends ApiController {
                 .build();
     }
 
-    private CompletableFuture<ResponseBuilder> get(@NotNull final String id) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
-                final Value value = dao.getValue(key);
-                if (value.isTombstone()) {
-                    return new ResponseBuilder(Response.OK, value.getTimestamp(), true);
-                } else {
-                    return new ResponseBuilder(Response.OK, value.getTimestamp(),
-                            ByteBufferUtils.byteBufferToByte(value.getData()));
-                }
-            } catch (NoSuchElementException e) {
-                return new ResponseBuilder(Response.NOT_FOUND);
-            } catch (IOException e) {
-                logger.error("GET element " + id, e);
-                throw new RuntimeException(e);
-            }
-        }, executor);
-    }
-
-    private CompletableFuture<ResponseBuilder> put(@NotNull final String id,
-                                                   @NotNull final Request request) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                dao.upsert(ByteBufferUtils.getByteBufferKey(id), ByteBuffer.wrap(request.getBody()));
-                return new ResponseBuilder(Response.CREATED);
-            } catch (IOException e) {
-                logger.error("PUT failed! Cannot put the element: {}. Request size: {}. Cause: {}",
-                        id, request.getBody().length, e.getCause());
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    private CompletableFuture<ResponseBuilder> delete(@NotNull final String id) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                dao.remove(ByteBufferUtils.getByteBufferKey(id));
-                return new ResponseBuilder(Response.ACCEPTED);
-            } catch (IOException e) {
-                logger.error("DELETE failed! Cannot get the element {}.\n Error: {}",
-                        id, e.getMessage(), e);
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
     @Override
     protected void handleResponses(@NotNull final String id,
                                    @NotNull final HttpSession session,
@@ -176,18 +129,69 @@ class AsyncApiControllerImpl extends ApiController {
     }
 
     @Override
-    protected void put(@NotNull String id, @NotNull HttpSession session, @NotNull Request request) {
+    protected void put(@NotNull final String id,
+                       @NotNull final HttpSession session,
+                       @NotNull final Request request) {
         ApiUtils.sendResponse(session, put(id, request), logger);
     }
 
     @Override
-    protected void get(@NotNull String id, @NotNull HttpSession session) {
+    protected void get(@NotNull final String id,
+                       @NotNull final HttpSession session) {
         ApiUtils.sendResponse(session, get(id), logger);
     }
 
     @Override
-    protected void delete(@NotNull String id, @NotNull HttpSession session) {
+    protected void delete(@NotNull final String id,
+                          @NotNull final HttpSession session) {
         ApiUtils.sendResponse(session, delete(id), logger);
+    }
+
+    private CompletableFuture<ResponseBuilder> get(@NotNull final String id) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
+                final Value value = dao.getValue(key);
+                if (value.isTombstone()) {
+                    return new ResponseBuilder(Response.OK, value.getTimestamp(), true);
+                } else {
+                    return new ResponseBuilder(Response.OK, value.getTimestamp(),
+                            ByteBufferUtils.byteBufferToByte(value.getData()));
+                }
+            } catch (NoSuchElementException e) {
+                return new ResponseBuilder(Response.NOT_FOUND);
+            } catch (IOException e) {
+                logger.error("GET element " + id, e);
+                throw new RuntimeException(e);
+            }
+        }, executor);
+    }
+
+    private CompletableFuture<ResponseBuilder> put(@NotNull final String id,
+                                                   @NotNull final Request request) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                dao.upsert(ByteBufferUtils.getByteBufferKey(id), ByteBuffer.wrap(request.getBody()));
+                return new ResponseBuilder(Response.CREATED);
+            } catch (IOException e) {
+                logger.error("PUT failed! Cannot put the element: {}. Request size: {}. Cause: {}",
+                        id, request.getBody().length, e.getCause());
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private CompletableFuture<ResponseBuilder> delete(@NotNull final String id) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                dao.remove(ByteBufferUtils.getByteBufferKey(id));
+                return new ResponseBuilder(Response.ACCEPTED);
+            } catch (IOException e) {
+                logger.error("DELETE failed! Cannot get the element {}.\n Error: {}",
+                        id, e.getMessage(), e);
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     private void mergeAndSendResponse(@NotNull final HttpSession session,

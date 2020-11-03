@@ -52,6 +52,9 @@ public class AsyncTopologyReplicaService extends BaseService {
         }
     }
 
+    /*
+    Create nodeToClient for AsyncTopologyReplicaService and AsyncTopologyReplicaService.
+     */
     public static BaseService getInstance(final int port,
                                    @NotNull final DAO dao,
                                    final int workersCount,

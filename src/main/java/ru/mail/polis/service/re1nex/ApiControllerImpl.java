@@ -46,6 +46,85 @@ class ApiControllerImpl extends ApiController {
         }
     }
 
+
+    @Override
+    protected void handleResponses(@NotNull final String id,
+                                   @NotNull final HttpSession session,
+                                   @NotNull final Request request,
+                                   final int ack,
+                                   @NotNull final Set<String> nodes) {
+        final List<Response> responses = new ArrayList<>();
+        switch (request.getMethod()) {
+            case Request.METHOD_GET:
+                handleResponses(nodes,
+                        responses,
+                        request,
+                        () -> get(id));
+                ApiUtils.sendResponse(session,
+                        MergeUtils.mergeGetResponses(responses, ack), logger);
+                break;
+            case Request.METHOD_DELETE:
+                handleResponses(nodes,
+                        responses,
+                        request,
+                        () -> delete(id));
+                ApiUtils.sendResponse(session,
+                        MergeUtils.mergePutDeleteResponses(responses, ack, false), logger);
+                break;
+            case Request.METHOD_PUT:
+                handleResponses(nodes,
+                        responses,
+                        request,
+                        () -> put(id, request));
+                ApiUtils.sendResponse(session,
+                        MergeUtils.mergePutDeleteResponses(responses, ack, true), logger);
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Override
+    protected void put(@NotNull final String id,
+                       @NotNull final HttpSession session,
+                       @NotNull final Request request) {
+        ApiUtils.sendResponse(session, put(id, request), logger);
+    }
+
+    @Override
+    protected void get(@NotNull final String id,
+                       @NotNull final HttpSession session) {
+        ApiUtils.sendResponse(session, get(id), logger);
+    }
+
+    @Override
+    protected void delete(@NotNull final String id,
+                          @NotNull final HttpSession session) {
+        ApiUtils.sendResponse(session, delete(id), logger);
+    }
+
+    @Override
+    public void sendReplica(@NotNull final String id,
+                            @NotNull final ReplicaInfo replicaInfo,
+                            @NotNull final HttpSession session,
+                            @NotNull final Request oldRequest) {
+        final Request request = new Request(oldRequest);
+        request.addHeader(ApiUtils.PROXY_FOR);
+        super.sendReplica(id, replicaInfo, session, request);
+    }
+
+    private void handleResponses(@NotNull final Set<String> nodes,
+                                 @NotNull final List<Response> responses,
+                                 @NotNull final Request request,
+                                 @NotNull final LocalResponse response) {
+        if (topology.removeLocal(nodes)) {
+            responses.add(response.handleLocalResponse());
+        }
+        for (final String node : nodes) {
+            responses.add(proxy(node, request));
+        }
+    }
+
     private Response get(@NotNull final String id) {
         try {
             final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
@@ -87,80 +166,6 @@ class ApiControllerImpl extends ApiController {
             logger.error("DELETE failed! Cannot get the element {}.\n Error: {}",
                     id, e.getMessage(), e);
             return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
-        }
-    }
-
-    @Override
-    protected void handleResponses(@NotNull final String id,
-                                   @NotNull final HttpSession session,
-                                   @NotNull final Request request,
-                                   final int ack,
-                                   @NotNull final Set<String> nodes) {
-        final List<Response> responses = new ArrayList<>();
-        switch (request.getMethod()) {
-            case Request.METHOD_GET:
-                handleResponses(nodes,
-                        responses,
-                        request,
-                        () -> get(id));
-                ApiUtils.sendResponse(session,
-                        MergeUtils.mergeGetResponses(responses, ack), logger);
-                break;
-            case Request.METHOD_DELETE:
-                handleResponses(nodes,
-                        responses,
-                        request,
-                        () -> delete(id));
-                ApiUtils.sendResponse(session,
-                        MergeUtils.mergePutDeleteResponses(responses, ack, false), logger);
-                break;
-            case Request.METHOD_PUT:
-                handleResponses(nodes,
-                        responses,
-                        request,
-                        () -> put(id, request));
-                ApiUtils.sendResponse(session,
-                        MergeUtils.mergePutDeleteResponses(responses, ack, true), logger);
-                break;
-            default:
-                break;
-        }
-    }
-
-    @Override
-    protected void put(@NotNull String id, @NotNull HttpSession session, @NotNull Request request) {
-        ApiUtils.sendResponse(session, put(id, request), logger);
-    }
-
-    @Override
-    protected void get(@NotNull String id, @NotNull HttpSession session) {
-        ApiUtils.sendResponse(session, get(id), logger);
-    }
-
-    @Override
-    protected void delete(@NotNull String id, @NotNull HttpSession session) {
-        ApiUtils.sendResponse(session, delete(id), logger);
-    }
-
-    @Override
-    public void sendReplica(@NotNull final String id,
-                            @NotNull final ReplicaInfo replicaInfo,
-                            @NotNull final HttpSession session,
-                            @NotNull final Request oldRequest) {
-        final Request request = new Request(oldRequest);
-        request.addHeader(ApiUtils.PROXY_FOR);
-        super.sendReplica(id, replicaInfo, session, request);
-    }
-
-    private void handleResponses(@NotNull final Set<String> nodes,
-                                 @NotNull final List<Response> responses,
-                                 @NotNull final Request request,
-                                 @NotNull final LocalResponse response) {
-        if (topology.removeLocal(nodes)) {
-            responses.add(response.handleLocalResponse());
-        }
-        for (final String node : nodes) {
-            responses.add(proxy(node, request));
         }
     }
 

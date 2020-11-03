@@ -17,7 +17,8 @@ abstract class ApiController {
     @NotNull
     protected final Logger logger;
 
-    protected ApiController(@NotNull Topology<String> topology, @NotNull Logger logger) {
+    protected ApiController(@NotNull final Topology<String> topology,
+                            @NotNull final Logger logger) {
         this.topology = topology;
         this.logger = logger;
     }
@@ -73,6 +74,5 @@ abstract class ApiController {
 
     protected abstract void delete(@NotNull final String id,
                                    @NotNull final HttpSession session);
-
 
 }
