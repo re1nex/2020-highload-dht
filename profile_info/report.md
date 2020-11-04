@@ -584,5 +584,4 @@ Transfer/sec:    106.68KB
 Асинхронная реализация
 ![image](https://github.com/re1nex/2020-highload-dht/blob/hw6/profile_info/async/get/lock.svg)
 
-
 Появились локи java.net SelectorManager(12%). Количество локов связанных c get из dao почти не изменилось. Появились дополнительные локи связанные с фьючами (11%) и новым клиентом (12%).
