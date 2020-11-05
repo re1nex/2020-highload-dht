@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -61,7 +60,7 @@ class AsyncApiControllerImpl extends ApiController {
                                 .build());
         this.client = java.net.http.HttpClient.newBuilder()
                 .executor(clientExecutor)
-                .connectTimeout(Duration.ofSeconds(10))
+                .connectTimeout(ApiUtils.TIMEOUT)
                 .version(java.net.http.HttpClient.Version.HTTP_1_1)
                 .build();
     }

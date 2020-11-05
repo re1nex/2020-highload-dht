@@ -31,14 +31,8 @@ class GetBodyHandler implements HttpResponse.BodyHandler<ResponseBuilder> {
                 }
             }
             case 404: {
-                final Optional<String> generation =
-                        responseInfo.headers().firstValue(ApiUtils.GENERATION);
-                if (generation.isPresent()) {
-                    return HttpResponse.BodySubscribers.replacing(
-                            new ResponseBuilder(Response.NOT_FOUND));
-                } else {
-                    throw new IllegalStateException("No generation in header");
-                }
+                return HttpResponse.BodySubscribers.replacing(
+                        new ResponseBuilder(Response.NOT_FOUND));
             }
             default: {
                 throw new RejectedExecutionException("Undefined status value");

@@ -30,6 +30,8 @@ final class ApiUtils {
     static final String PROXY_FOR = "X-Proxy-For: ";
     @NotNull
     static final String PROXY_FOR_CLIENT = "X-Proxy-For";
+    @NotNull
+    static final Duration TIMEOUT = Duration.ofSeconds(10);
 
     private ApiUtils() {
     }
@@ -94,7 +96,7 @@ final class ApiUtils {
             return HttpRequest.newBuilder()
                     .uri(new URI(node + "/v0/entity?id=" + id))
                     .header(PROXY_FOR_CLIENT, "True")
-                    .timeout(Duration.ofSeconds(10));
+                    .timeout(TIMEOUT);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
