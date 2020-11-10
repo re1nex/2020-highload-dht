@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 final class MergeUtils {
@@ -110,12 +111,13 @@ final class MergeUtils {
 
     @NotNull
     static <T> CompletableFuture<Collection<T>> collateFutures(@NotNull final Collection<CompletableFuture<T>> futures,
-                                                               final int ack) {
+                                                               final int ack,
+                                                               @NotNull ExecutorService executorService) {
         final AtomicInteger counterSuccess = new AtomicInteger(ack);
         final AtomicInteger counterFails = new AtomicInteger(futures.size() - ack + 1);
         final Collection<T> results = new CopyOnWriteArrayList<>();
         final CompletableFuture<Collection<T>> result = new CompletableFuture<>();
-        futures.forEach(future -> future = future.whenComplete((res, err) -> {
+        futures.forEach(future -> future = future.whenCompleteAsync((res, err) -> {
             if (err == null) {
                 results.add(res);
                 if (counterSuccess.decrementAndGet() == 0) {
@@ -126,7 +128,7 @@ final class MergeUtils {
                     result.completeExceptionally(new IllegalStateException(err));
                 }
             }
-        }));
+        }, executorService));
         return result;
     }
 

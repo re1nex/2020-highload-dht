@@ -158,7 +158,7 @@ class AsyncApiControllerImpl extends ApiController {
     protected void put(@NotNull final String id,
                        @NotNull final HttpSession session,
                        @NotNull final Request request) {
-        ApiUtils.sendResponse(session, put(id, request), logger);
+        ApiUtils.sendResponse(session, put(id, request), logger, executor);
     }
 
     @NotNull
@@ -179,7 +179,7 @@ class AsyncApiControllerImpl extends ApiController {
     @Override
     protected void get(@NotNull final String id,
                        @NotNull final HttpSession session) {
-        ApiUtils.sendResponse(session, get(id), logger);
+        ApiUtils.sendResponse(session, get(id), logger, executor);
     }
 
     @NotNull
@@ -206,7 +206,7 @@ class AsyncApiControllerImpl extends ApiController {
     @Override
     protected void delete(@NotNull final String id,
                           @NotNull final HttpSession session) {
-        ApiUtils.sendResponse(session, delete(id), logger);
+        ApiUtils.sendResponse(session, delete(id), logger, executor);
     }
 
     @NotNull
@@ -228,7 +228,7 @@ class AsyncApiControllerImpl extends ApiController {
                                       @NotNull final MergeResponse mergeResponse,
                                       final int ack) {
         final CompletableFuture<Collection<ResponseBuilder>> completableFuture =
-                MergeUtils.collateFutures(responses, ack).whenCompleteAsync((res, err) -> {
+                MergeUtils.collateFutures(responses, ack, executor).whenCompleteAsync((res, err) -> {
                     if (err == null) {
                         ApiUtils.sendResponse(session,
                                 mergeResponse.mergeResponse(res),
@@ -241,8 +241,8 @@ class AsyncApiControllerImpl extends ApiController {
                         }
                     }
                 }, executor);
-        if (completableFuture.isCancelled()) {
-            logger.error("future was cancelled");
+        if (completableFuture == null) {
+            logger.error("future was null");
         }
     }
 }

@@ -76,14 +76,14 @@ public interface DAO extends Closeable {
     default ByteBuffer get(@NotNull ByteBuffer key) throws IOException, NoSuchElementException {
         final Iterator<Record> iter = iterator(key);
         if (!iter.hasNext()) {
-            throw new NoSuchElementException(DAOResultCode.NOT_FOUND.name());
+            throw new NoSuchElementException();
         }
 
         final Record next = iter.next();
         if (next.getKey().equals(key)) {
             return next.getValue();
         } else {
-            throw new NoSuchElementException(DAOResultCode.NOT_FOUND.name());
+            throw new NoSuchElementException();
         }
     }
 
@@ -96,11 +96,11 @@ public interface DAO extends Closeable {
     default Value getValue(@NotNull ByteBuffer key) throws IOException, NoSuchElementException {
         final Iterator<Cell> iter = cellIterator(key);
         if (!iter.hasNext()) {
-            throw new NoSuchElementException(DAOResultCode.NOT_FOUND.name());
+            throw new NoSuchElementException();
         }
         final Cell next = iter.next();
         if (!next.getKey().equals(key)) {
-            throw new NoSuchElementException(DAOResultCode.NOT_FOUND.name());
+            throw new NoSuchElementException();
         }
         return next.getValue();
     }
