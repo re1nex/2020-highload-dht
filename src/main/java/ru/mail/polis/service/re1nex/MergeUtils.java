@@ -93,11 +93,11 @@ final class MergeUtils {
     static Response mergePutDeleteResponses(@NotNull final List<Response> responses,
                                             final int ack,
                                             final String statusOk) {
-        int numResponses = 0;
-        int statusCode = ApiUtils.getStatusCodeFromStatus(statusOk);
+        final int statusCode = ApiUtils.getStatusCodeFromStatus(statusOk);
         if (statusCode < 0) {
             return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
         }
+        int numResponses = 0;
         for (final Response response : responses) {
             if (response.getStatus() == statusCode) {
                 numResponses++;
@@ -110,9 +110,10 @@ final class MergeUtils {
     }
 
     @NotNull
-    static <T> CompletableFuture<Collection<T>> collateFutures(@NotNull final Collection<CompletableFuture<T>> futures,
-                                                               final int ack,
-                                                               @NotNull ExecutorService executorService) {
+    static <T> CompletableFuture<Collection<T>>
+    collateFutures(@NotNull final Collection<CompletableFuture<T>> futures,
+                   final int ack,
+                   @NotNull ExecutorService executorService) {
         final AtomicInteger counterSuccess = new AtomicInteger(ack);
         final AtomicInteger counterFails = new AtomicInteger(futures.size() - ack + 1);
         final Collection<T> results = new CopyOnWriteArrayList<>();

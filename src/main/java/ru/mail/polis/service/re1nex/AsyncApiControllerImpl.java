@@ -136,10 +136,11 @@ class AsyncApiControllerImpl extends ApiController {
     }
 
     @NotNull
-    private List<CompletableFuture<ResponseBuilder>> handleResponses(@NotNull final Set<String> nodes,
-                                                                     @NotNull final LocalResponse response,
-                                                                     @NotNull final RequestBuilder requestBuilder,
-                                                                     @NotNull final HttpResponse.BodyHandler<ResponseBuilder> handler) {
+    private List<CompletableFuture<ResponseBuilder>>
+    handleResponses(@NotNull final Set<String> nodes,
+                    @NotNull final LocalResponse response,
+                    @NotNull final RequestBuilder requestBuilder,
+                    @NotNull final HttpResponse.BodyHandler<ResponseBuilder> handler) {
         final List<CompletableFuture<ResponseBuilder>> responses = new ArrayList<>();
         if (topology.removeLocal(nodes)) {
             responses.add(response.handleLocalResponse());
