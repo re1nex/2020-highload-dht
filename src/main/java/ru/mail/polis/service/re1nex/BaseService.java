@@ -47,7 +47,7 @@ abstract class BaseService extends HttpServer implements Service {
         this.logger = logger;
         this.executor = new ThreadPoolExecutor(
                 workersCount,
-                workersCount,
+                queueSize,
                 0L,
                 TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(queueSize),

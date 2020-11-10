@@ -11,6 +11,7 @@ import ru.mail.polis.dao.re1nex.Topology;
 import ru.mail.polis.dao.re1nex.Value;
 
 import java.io.IOException;
+import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
@@ -29,19 +30,22 @@ class AsyncApiControllerImpl extends ApiController {
     @NotNull
     private final DAO dao;
     @NotNull
-    private final java.net.http.HttpClient client;
+    private final HttpClient client;
     @NotNull
     protected final ExecutorService executor;
 
     interface LocalResponse {
+        @NotNull
         CompletableFuture<ResponseBuilder> handleLocalResponse();
     }
 
     interface RequestBuilder {
+        @NotNull
         HttpRequest requestBuild(@NotNull final String node);
     }
 
     interface MergeResponse {
+        @NotNull
         Response mergeResponse(@NotNull final Collection<ResponseBuilder> responses);
     }
 
@@ -58,10 +62,10 @@ class AsyncApiControllerImpl extends ApiController {
                                 .setUncaughtExceptionHandler((t, e) -> logger.error("Error {} in thread {}", e, t))
                                 .setNameFormat("worker_%d")
                                 .build());
-        this.client = java.net.http.HttpClient.newBuilder()
+        this.client = HttpClient.newBuilder()
                 .executor(clientExecutor)
                 .connectTimeout(ApiUtils.TIMEOUT)
-                .version(java.net.http.HttpClient.Version.HTTP_1_1)
+                .version(HttpClient.Version.HTTP_1_1)
                 .build();
     }
 
@@ -71,11 +75,9 @@ class AsyncApiControllerImpl extends ApiController {
                                    @NotNull final Request request,
                                    final int ack,
                                    @NotNull final Set<String> nodes) {
-        final List<CompletableFuture<ResponseBuilder>> responses = new ArrayList<>();
         switch (request.getMethod()) {
-            case Request.METHOD_GET:
-                handleResponses(nodes,
-                        responses,
+            case Request.METHOD_GET: {
+                final List<CompletableFuture<ResponseBuilder>> responses = handleResponses(nodes,
                         () -> get(id),
                         node -> ApiUtils.proxyRequestBuilder(node, id)
                                 .GET()
@@ -86,9 +88,9 @@ class AsyncApiControllerImpl extends ApiController {
                         responseBuilders -> MergeUtils.mergeGetResponseBuilders(responseBuilders, ack),
                         ack);
                 break;
-            case Request.METHOD_DELETE:
-                handleResponses(nodes,
-                        responses,
+            }
+            case Request.METHOD_DELETE: {
+                final List<CompletableFuture<ResponseBuilder>> responses = handleResponses(nodes,
                         () -> delete(id),
                         node -> ApiUtils.proxyRequestBuilder(node, id)
                                 .DELETE()
@@ -101,12 +103,13 @@ class AsyncApiControllerImpl extends ApiController {
                                                 .map(responseBuilder -> new Response(responseBuilder.getResponse()))
                                                 .collect(Collectors.toList()),
                                         ack,
-                                        false),
+                                        Response.ACCEPTED
+                                ),
                         ack);
                 break;
-            case Request.METHOD_PUT:
-                handleResponses(nodes,
-                        responses,
+            }
+            case Request.METHOD_PUT: {
+                final List<CompletableFuture<ResponseBuilder>> responses = handleResponses(nodes,
                         () -> put(id, request),
                         node -> ApiUtils.proxyRequestBuilder(node, id)
                                 .PUT(HttpRequest.BodyPublishers.ofByteArray(request.getBody()))
@@ -119,19 +122,25 @@ class AsyncApiControllerImpl extends ApiController {
                                                 .map(responseBuilder -> new Response(responseBuilder.getResponse()))
                                                 .collect(Collectors.toList()),
                                         ack,
-                                        true),
+                                        Response.CREATED
+                                ),
                         ack);
                 break;
+            }
             default:
+                ApiUtils.sendResponse(session,
+                        new Response(Response.BAD_REQUEST, Response.EMPTY),
+                        logger);
                 break;
         }
     }
 
-    private void handleResponses(@NotNull final Set<String> nodes,
-                                 @NotNull final List<CompletableFuture<ResponseBuilder>> responses,
-                                 @NotNull final LocalResponse response,
-                                 @NotNull final RequestBuilder requestBuilder,
-                                 @NotNull final HttpResponse.BodyHandler<ResponseBuilder> handler) {
+    @NotNull
+    private List<CompletableFuture<ResponseBuilder>> handleResponses(@NotNull final Set<String> nodes,
+                                                                     @NotNull final LocalResponse response,
+                                                                     @NotNull final RequestBuilder requestBuilder,
+                                                                     @NotNull final HttpResponse.BodyHandler<ResponseBuilder> handler) {
+        final List<CompletableFuture<ResponseBuilder>> responses = new ArrayList<>();
         if (topology.removeLocal(nodes)) {
             responses.add(response.handleLocalResponse());
         }
@@ -142,6 +151,7 @@ class AsyncApiControllerImpl extends ApiController {
                             .thenApplyAsync(HttpResponse::body, executor);
             responses.add(responseCompletableFuture);
         }
+        return responses;
     }
 
     @Override
@@ -151,6 +161,7 @@ class AsyncApiControllerImpl extends ApiController {
         ApiUtils.sendResponse(session, put(id, request), logger);
     }
 
+    @NotNull
     private CompletableFuture<ResponseBuilder> put(@NotNull final String id,
                                                    @NotNull final Request request) {
         return CompletableFuture.supplyAsync(() -> {
@@ -162,7 +173,7 @@ class AsyncApiControllerImpl extends ApiController {
                         id, request.getBody().length, e.getCause());
                 throw new RuntimeException(e);
             }
-        });
+        }, executor);
     }
 
     @Override
@@ -171,6 +182,7 @@ class AsyncApiControllerImpl extends ApiController {
         ApiUtils.sendResponse(session, get(id), logger);
     }
 
+    @NotNull
     private CompletableFuture<ResponseBuilder> get(@NotNull final String id) {
         return CompletableFuture.supplyAsync(() -> {
             try {
@@ -197,6 +209,7 @@ class AsyncApiControllerImpl extends ApiController {
         ApiUtils.sendResponse(session, delete(id), logger);
     }
 
+    @NotNull
     private CompletableFuture<ResponseBuilder> delete(@NotNull final String id) {
         return CompletableFuture.supplyAsync(() -> {
             try {
@@ -207,7 +220,7 @@ class AsyncApiControllerImpl extends ApiController {
                         id, e.getMessage(), e);
                 throw new RuntimeException(e);
             }
-        });
+        }, executor);
     }
 
     private void mergeAndSendResponse(@NotNull final HttpSession session,
@@ -215,7 +228,7 @@ class AsyncApiControllerImpl extends ApiController {
                                       @NotNull final MergeResponse mergeResponse,
                                       final int ack) {
         final CompletableFuture<Collection<ResponseBuilder>> completableFuture =
-                MergeUtils.collateFutures(responses, ack).whenComplete((res, err) -> {
+                MergeUtils.collateFutures(responses, ack).whenCompleteAsync((res, err) -> {
                     if (err == null) {
                         ApiUtils.sendResponse(session,
                                 mergeResponse.mergeResponse(res),
@@ -227,7 +240,7 @@ class AsyncApiControllerImpl extends ApiController {
                             ApiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
                         }
                     }
-                });
+                }, executor);
         if (completableFuture.isCancelled()) {
             logger.error("future was cancelled");
         }

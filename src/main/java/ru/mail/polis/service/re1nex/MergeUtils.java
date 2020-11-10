@@ -91,18 +91,21 @@ final class MergeUtils {
 
     static Response mergePutDeleteResponses(@NotNull final List<Response> responses,
                                             final int ack,
-                                            final boolean isPut) {
+                                            final String statusOk) {
         int numResponses = 0;
-        final int statusOk = isPut ? 201 : 202;
+        int statusCode = ApiUtils.getStatusCodeFromStatus(statusOk);
+        if (statusCode < 0) {
+            return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
+        }
         for (final Response response : responses) {
-            if (response.getStatus() == statusOk) {
+            if (response.getStatus() == statusCode) {
                 numResponses++;
             }
         }
         if (numResponses < ack) {
             return new Response(ApiUtils.NOT_ENOUGH_REPLICAS, Response.EMPTY);
         }
-        return new Response(isPut ? Response.CREATED : Response.ACCEPTED, Response.EMPTY);
+        return new Response(statusOk, Response.EMPTY);
     }
 
     @NotNull

@@ -32,8 +32,21 @@ final class ApiUtils {
     static final String PROXY_FOR_CLIENT = "X-Proxy-For";
     @NotNull
     static final Duration TIMEOUT = Duration.ofSeconds(10);
+    static final int ACCEPTED_STATUS_CODE = 202;
+    static final int CREATED_STATUS_CODE = 201;
 
     private ApiUtils() {
+    }
+
+    static int getStatusCodeFromStatus(@NotNull final String status) {
+        switch (status) {
+            case Response.ACCEPTED:
+                return ACCEPTED_STATUS_CODE;
+            case Response.CREATED:
+                return CREATED_STATUS_CODE;
+            default:
+                return -1;
+        }
     }
 
     static void sendResponse(@NotNull final HttpSession session,

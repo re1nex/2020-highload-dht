@@ -52,47 +52,59 @@ class ApiControllerImpl extends ApiController {
                                    @NotNull final Request request,
                                    final int ack,
                                    @NotNull final Set<String> nodes) {
-        final List<Response> responses = new ArrayList<>();
         switch (request.getMethod()) {
-            case Request.METHOD_GET:
-                handleResponses(nodes,
-                        responses,
+            case Request.METHOD_GET: {
+                final List<Response> responses = handleResponses(nodes,
                         request,
                         () -> get(id));
                 ApiUtils.sendResponse(session,
                         MergeUtils.mergeGetResponses(responses, ack), logger);
                 break;
-            case Request.METHOD_DELETE:
-                handleResponses(nodes,
-                        responses,
+            }
+            case Request.METHOD_DELETE: {
+                final List<Response> responses = handleResponses(nodes,
                         request,
                         () -> delete(id));
                 ApiUtils.sendResponse(session,
-                        MergeUtils.mergePutDeleteResponses(responses, ack, false), logger);
+                        MergeUtils.mergePutDeleteResponses(responses,
+                                ack,
+                                Response.ACCEPTED
+                        ),
+                        logger);
                 break;
-            case Request.METHOD_PUT:
-                handleResponses(nodes,
-                        responses,
+            }
+            case Request.METHOD_PUT: {
+                final List<Response> responses = handleResponses(nodes,
                         request,
                         () -> put(id, request));
                 ApiUtils.sendResponse(session,
-                        MergeUtils.mergePutDeleteResponses(responses, ack, true), logger);
+                        MergeUtils.mergePutDeleteResponses(responses,
+                                ack,
+                                Response.CREATED
+                        ),
+                        logger);
                 break;
+            }
             default:
+                ApiUtils.sendResponse(session,
+                        new Response(Response.BAD_REQUEST, Response.EMPTY),
+                        logger);
                 break;
         }
     }
 
-    private void handleResponses(@NotNull final Set<String> nodes,
-                                 @NotNull final List<Response> responses,
-                                 @NotNull final Request request,
-                                 @NotNull final LocalResponse response) {
+    @NotNull
+    private List<Response> handleResponses(@NotNull final Set<String> nodes,
+                                           @NotNull final Request request,
+                                           @NotNull final LocalResponse response) {
+        final List<Response> responses = new ArrayList<>();
         if (topology.removeLocal(nodes)) {
             responses.add(response.handleLocalResponse());
         }
         for (final String node : nodes) {
             responses.add(proxy(node, request));
         }
+        return responses;
     }
 
     @Override
@@ -101,6 +113,7 @@ class ApiControllerImpl extends ApiController {
         ApiUtils.sendResponse(session, get(id), logger);
     }
 
+    @NotNull
     private Response get(@NotNull final String id) {
         try {
             final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
@@ -129,6 +142,7 @@ class ApiControllerImpl extends ApiController {
         ApiUtils.sendResponse(session, put(id, request), logger);
     }
 
+    @NotNull
     private Response put(@NotNull final String id,
                          @NotNull final Request request) {
         try {
@@ -169,6 +183,7 @@ class ApiControllerImpl extends ApiController {
     }
 
     interface LocalResponse {
+        @NotNull
         Response handleLocalResponse();
     }
 }
