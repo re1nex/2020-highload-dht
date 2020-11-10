@@ -113,7 +113,7 @@ final class MergeUtils {
     static <T> CompletableFuture<Collection<T>>
     collateFutures(@NotNull final Collection<CompletableFuture<T>> futures,
                    final int ack,
-                   @NotNull ExecutorService executorService) {
+                   @NotNull final ExecutorService executorService) {
         final AtomicInteger counterSuccess = new AtomicInteger(ack);
         final AtomicInteger counterFails = new AtomicInteger(futures.size() - ack + 1);
         final Collection<T> results = new CopyOnWriteArrayList<>();
