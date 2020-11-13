@@ -12,7 +12,6 @@ import java.net.URISyntaxException;
 import java.net.http.HttpRequest;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 
 final class ApiUtils {
     @NonNull
@@ -35,14 +34,14 @@ final class ApiUtils {
     private ApiUtils() {
     }
 
-    static int getStatusCodeFromStatus(@NotNull final String status) {
+    static int getStatusCodeFromStatus(@NotNull final String status) throws IllegalArgumentException {
         switch (status) {
             case Response.ACCEPTED:
                 return ACCEPTED_STATUS_CODE;
             case Response.CREATED:
                 return CREATED_STATUS_CODE;
             default:
-                return -1;
+                throw new IllegalArgumentException("unkown status");
         }
     }
 
@@ -58,17 +57,16 @@ final class ApiUtils {
 
     static void sendResponse(@NotNull final HttpSession session,
                              @NotNull final CompletableFuture<ResponseBuilder> responseCompletableFuture,
-                             @NotNull final Logger logger,
-                             @NotNull final ExecutorService executorService) {
+                             @NotNull final Logger logger) {
         final CompletableFuture<ResponseBuilder> completableFuture
-                = responseCompletableFuture.whenCompleteAsync((response, throwable) -> {
+                = responseCompletableFuture.whenComplete((response, throwable) -> {
             if (throwable == null) {
                 sendResponse(session, response.getResponse(), logger);
             } else {
                 sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
             }
-        }, executorService);
-        if (completableFuture == null) {
+        });
+        if (completableFuture.isCancelled()) {
             logger.error("future is null");
         }
     }

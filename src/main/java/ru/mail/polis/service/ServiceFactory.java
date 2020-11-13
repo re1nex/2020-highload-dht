@@ -68,7 +68,7 @@ public final class ServiceFactory {
         return new FullAsyncTopologyReplicaService(port,
                 dao,
                 Runtime.getRuntime().availableProcessors(),
-                16,
+                128,
                 modTopology);
     }
 }

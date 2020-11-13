@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 final class MergeUtils {
@@ -53,9 +52,9 @@ final class MergeUtils {
         long lastGeneration = 0;
         ResponseBuilder last = new ResponseBuilder(Response.NOT_FOUND);
         for (final ResponseBuilder response : responses) {
-            if (response.getStatus() == 404) {
+            if (response.getStatusCode() == 404) {
                 numNotFoundResponses++;
-            } else if (response.getStatus() == 200) {
+            } else if (response.getStatusCode() == 200) {
                 final long generation = response.getGeneration();
                 if (lastGeneration < generation || lastGeneration == 0) {
                     lastGeneration = generation;
@@ -94,9 +93,6 @@ final class MergeUtils {
                                             final int ack,
                                             final String statusOk) {
         final int statusCode = ApiUtils.getStatusCodeFromStatus(statusOk);
-        if (statusCode < 0) {
-            return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
-        }
         int numResponses = 0;
         for (final Response response : responses) {
             if (response.getStatus() == statusCode) {
@@ -109,16 +105,36 @@ final class MergeUtils {
         return new Response(statusOk, Response.EMPTY);
     }
 
+    static Response mergePutDeleteResponseBuilders(@NotNull final Collection<ResponseBuilder> responses,
+                                                   final int ack,
+                                                   final String statusOk) {
+        final int status;
+        try {
+            status = ApiUtils.getStatusCodeFromStatus(statusOk);
+        } catch (IllegalArgumentException e) {
+            return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
+        }
+        int numResponse = 0;
+        for (final ResponseBuilder response : responses) {
+            if (response.getStatusCode() == status) {
+                numResponse++;
+            }
+        }
+        if (numResponse >= ack) {
+            return new Response(statusOk, Response.EMPTY);
+        }
+        return new Response(ApiUtils.NOT_ENOUGH_REPLICAS, Response.EMPTY);
+    }
+
     @NotNull
     static <T> CompletableFuture<Collection<T>>
     collateFutures(@NotNull final Collection<CompletableFuture<T>> futures,
-                   final int ack,
-                   @NotNull final ExecutorService executorService) {
+                   final int ack) {
         final AtomicInteger counterSuccess = new AtomicInteger(ack);
         final AtomicInteger counterFails = new AtomicInteger(futures.size() - ack + 1);
         final Collection<T> results = new CopyOnWriteArrayList<>();
         final CompletableFuture<Collection<T>> result = new CompletableFuture<>();
-        futures.forEach(future -> future = future.whenCompleteAsync((res, err) -> {
+        futures.forEach(future -> future = future.whenComplete((res, err) -> {
             if (err == null) {
                 results.add(res);
                 if (counterSuccess.decrementAndGet() == 0) {
@@ -129,7 +145,7 @@ final class MergeUtils {
                     result.completeExceptionally(new IllegalStateException(err));
                 }
             }
-        }, executorService));
+        }));
         return result;
     }
 

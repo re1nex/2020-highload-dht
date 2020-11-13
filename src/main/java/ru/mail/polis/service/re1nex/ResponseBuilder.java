@@ -26,7 +26,7 @@ final class ResponseBuilder {
         this.onlyStatus = false;
     }
 
-    public int getStatus() {
+    public int getStatusCode() {
         final String s = resultCode;
         return (s.charAt(0) * 100) + (s.charAt(1) * 10) + s.charAt(2) - ('0' * 111);
     }

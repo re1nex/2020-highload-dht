@@ -24,7 +24,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 class AsyncApiControllerImpl extends ApiController {
     @NotNull
@@ -99,9 +98,7 @@ class AsyncApiControllerImpl extends ApiController {
                 mergeAndSendResponse(session,
                         responses,
                         responseBuilders ->
-                                MergeUtils.mergePutDeleteResponses(responseBuilders.stream()
-                                                .map(responseBuilder -> new Response(responseBuilder.getResponse()))
-                                                .collect(Collectors.toList()),
+                                MergeUtils.mergePutDeleteResponseBuilders(responseBuilders,
                                         ack,
                                         Response.ACCEPTED
                                 ),
@@ -118,9 +115,7 @@ class AsyncApiControllerImpl extends ApiController {
                 mergeAndSendResponse(session,
                         responses,
                         responseBuilders ->
-                                MergeUtils.mergePutDeleteResponses(responseBuilders.stream()
-                                                .map(responseBuilder -> new Response(responseBuilder.getResponse()))
-                                                .collect(Collectors.toList()),
+                                MergeUtils.mergePutDeleteResponseBuilders(responseBuilders,
                                         ack,
                                         Response.CREATED
                                 ),
@@ -159,7 +154,7 @@ class AsyncApiControllerImpl extends ApiController {
     protected void put(@NotNull final String id,
                        @NotNull final HttpSession session,
                        @NotNull final Request request) {
-        ApiUtils.sendResponse(session, put(id, request), logger, executor);
+        ApiUtils.sendResponse(session, put(id, request), logger);
     }
 
     @NotNull
@@ -180,7 +175,7 @@ class AsyncApiControllerImpl extends ApiController {
     @Override
     protected void get(@NotNull final String id,
                        @NotNull final HttpSession session) {
-        ApiUtils.sendResponse(session, get(id), logger, executor);
+        ApiUtils.sendResponse(session, get(id), logger);
     }
 
     @NotNull
@@ -207,7 +202,7 @@ class AsyncApiControllerImpl extends ApiController {
     @Override
     protected void delete(@NotNull final String id,
                           @NotNull final HttpSession session) {
-        ApiUtils.sendResponse(session, delete(id), logger, executor);
+        ApiUtils.sendResponse(session, delete(id), logger);
     }
 
     @NotNull
@@ -229,7 +224,7 @@ class AsyncApiControllerImpl extends ApiController {
                                       @NotNull final MergeResponse mergeResponse,
                                       final int ack) {
         final CompletableFuture<Collection<ResponseBuilder>> completableFuture =
-                MergeUtils.collateFutures(responses, ack, executor).whenCompleteAsync((res, err) -> {
+                MergeUtils.collateFutures(responses, ack).whenCompleteAsync((res, err) -> {
                     if (err == null) {
                         ApiUtils.sendResponse(session,
                                 mergeResponse.mergeResponse(res),
@@ -242,7 +237,7 @@ class AsyncApiControllerImpl extends ApiController {
                         }
                     }
                 }, executor);
-        if (completableFuture == null) {
+        if (completableFuture.isCancelled()) {
             logger.error("future was null");
         }
     }
