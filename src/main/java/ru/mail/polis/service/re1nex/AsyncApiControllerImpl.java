@@ -224,7 +224,7 @@ class AsyncApiControllerImpl extends ApiController {
                                       @NotNull final MergeResponse mergeResponse,
                                       final int ack) {
         final CompletableFuture<Collection<ResponseBuilder>> completableFuture =
-                MergeUtils.collateFutures(responses, ack).whenCompleteAsync((res, err) -> {
+                MergeUtils.collateFutures(responses, ack, executor).whenCompleteAsync((res, err) -> {
                     if (err == null) {
                         ApiUtils.sendResponse(session,
                                 mergeResponse.mergeResponse(res),
