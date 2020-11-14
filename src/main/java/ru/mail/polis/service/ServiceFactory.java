@@ -59,10 +59,9 @@ public final class ServiceFactory {
         if (port <= 0 || 65536 <= port) {
             throw new IllegalArgumentException("Port out of range");
         }
-
-        final Topology<String> modTopology;
+        final Topology<String> hashTopology;
         try {
-            modTopology = new ConsistentHashingTopology(topology, "http://localhost:" + port);
+            hashTopology = new ConsistentHashingTopology(topology, "http://localhost:" + port);
         } catch (NoSuchAlgorithmException e) {
             throw new IOException(e);
         }
@@ -70,6 +69,6 @@ public final class ServiceFactory {
                 dao,
                 Runtime.getRuntime().availableProcessors(),
                 QUEUE_SIZE,
-                modTopology);
+                hashTopology);
     }
 }
