@@ -93,7 +93,12 @@ final class MergeUtils {
     static Response mergePutDeleteResponses(@NotNull final List<Response> responses,
                                             final int ack,
                                             final String statusOk) {
-        final int statusCode = ApiUtils.getStatusCodeFromStatus(statusOk);
+        final int statusCode;
+        try {
+            statusCode = ApiUtils.getStatusCodeFromStatus(statusOk);
+        } catch (IllegalArgumentException e) {
+            return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
+        }
         int numResponses = 0;
         for (final Response response : responses) {
             if (response.getStatus() == statusCode) {
