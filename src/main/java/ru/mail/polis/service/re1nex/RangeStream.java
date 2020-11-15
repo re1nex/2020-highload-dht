@@ -60,7 +60,8 @@ final class RangeStream extends HttpSession {
                 ? !"close".equalsIgnoreCase(connection)
                 : "Keep-Alive".equalsIgnoreCase(connection);
         if (!keepAlive) scheduleClose();
-        if ((this.handling = handling = pipeline.pollFirst()) != null) {
+        this.handling = handling = pipeline.pollFirst();
+        if (this.handling != null) {
             if (handling == FIN) {
                 scheduleClose();
             } else {

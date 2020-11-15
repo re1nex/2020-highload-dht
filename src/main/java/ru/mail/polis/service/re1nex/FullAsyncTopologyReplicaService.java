@@ -49,7 +49,7 @@ public class FullAsyncTopologyReplicaService extends BaseService {
     }
 
     @Override
-    public HttpSession createSession(Socket socket) throws RejectedSessionException {
+    public HttpSession createSession(@NotNull final Socket socket) {
         return new RangeStream(socket, this);
     }
 
