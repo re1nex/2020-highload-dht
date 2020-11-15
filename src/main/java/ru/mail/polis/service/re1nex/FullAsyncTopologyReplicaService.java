@@ -76,7 +76,6 @@ public class FullAsyncTopologyReplicaService extends BaseService {
             } else {
                 endByteBuffer = ByteBufferUtils.getByteBufferKey(end);
             }
-
             try {
                 ((RangeStream) session).setIterator(dao.range(startByteBuffer, endByteBuffer));
             } catch (IOException e) {
