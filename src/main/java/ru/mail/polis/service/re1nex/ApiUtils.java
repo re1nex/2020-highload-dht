@@ -72,10 +72,10 @@ final class ApiUtils {
     }
 
     static void sendErrorResponse(@NotNull final HttpSession session,
-                                  @NotNull final String internalError,
+                                  @NotNull final String error,
                                   @NotNull final Logger logger) {
         try {
-            session.sendResponse(new Response(internalError, Response.EMPTY));
+            session.sendResponse(new Response(error, Response.EMPTY));
         } catch (IOException ioException) {
             logger.error(RESPONSE_ERROR, ioException);
         }
