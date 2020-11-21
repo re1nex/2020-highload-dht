@@ -66,6 +66,7 @@ class AsyncApiControllerImpl {
             ApiUtils.sendResponse(session,
                     new Response(ApiUtils.NOT_ENOUGH_REPLICAS, Response.EMPTY)
             );
+            return;
         }
         final Set<String> nodes;
         try {
