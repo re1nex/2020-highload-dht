@@ -143,8 +143,16 @@ class ReadRepairTest extends ClusterTestBase {
                 // Start node
                 createAndStart(node);
 
+                int stopNode = (node + 1) % getClusterSize();
+                // Stop node
+                stop(stopNode);
+
                 //try to ask more replicas that have
-                assertEquals(504, get(node, key, getClusterSize() + 1, getClusterSize() + 1).getStatus());
+                assertEquals(504, get(node, key, getClusterSize(), getClusterSize()).getStatus());
+
+                createAndStart(stopNode);
+
+                waitForVersionAdvancement();
 
                 //stop all that wasn't missed
                 for (int i = 0; i < getClusterSize(); i++) {
