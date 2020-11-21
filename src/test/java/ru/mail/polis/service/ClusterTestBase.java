@@ -48,12 +48,12 @@ abstract class ClusterTestBase extends TestBase {
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
     private final Map<String, HttpClient> hostToClient = new HashMap<>();
 
-    private String[] nodes;
+    protected String[] nodes;
     private int[] ports;
     private File[] datas;
     private DAO[] daos;
     private Service[] services;
-    private Set<String> endpoints;
+    protected Set<String> endpoints;
 
     @NotNull
     private static String path(@NotNull final String id) {

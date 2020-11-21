@@ -5,14 +5,21 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-final class ByteBufferUtils {
+/**
+ * Provide some util's methods for bytebuffer.
+ */
+public final class ByteBufferUtils {
     @NotNull
     private static final byte[] emptyArray = new byte[0];
 
     private ByteBufferUtils() {
     }
 
-    static byte[] byteBufferToByte(@NotNull final ByteBuffer result) {
+    /**
+     * Get byte array from ByteBuffer.
+     */
+    @NotNull
+    public static byte[] byteBufferToByte(@NotNull final ByteBuffer result) {
         if (result.hasRemaining()) {
             final byte[] resultByteArray = new byte[result.remaining()];
             result.get(resultByteArray);
@@ -22,8 +29,11 @@ final class ByteBufferUtils {
         }
     }
 
+    /**
+     * Get ByteBuffer from String.
+     */
     @NotNull
-    static ByteBuffer getByteBufferKey(@NotNull final String id) {
+    public static ByteBuffer getByteBufferKey(@NotNull final String id) {
         return ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
     }
 
