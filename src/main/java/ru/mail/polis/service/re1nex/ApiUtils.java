@@ -11,6 +11,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpRequest;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 final class ApiUtils {
@@ -32,6 +33,21 @@ final class ApiUtils {
     static final Duration TIMEOUT = Duration.ofSeconds(1);
     static final int ACCEPTED_STATUS_CODE = 202;
     static final int CREATED_STATUS_CODE = 201;
+
+    interface LocalResponse {
+        @NotNull
+        CompletableFuture<ResponseBuilder> handleLocalResponse();
+    }
+
+    interface RequestBuilder {
+        @NotNull
+        HttpRequest requestBuild(@NotNull final String node);
+    }
+
+    interface MergeResponse {
+        @NotNull
+        Response mergeResponse(@NotNull final Collection<ResponseBuilder> responses);
+    }
 
     private ApiUtils() {
     }

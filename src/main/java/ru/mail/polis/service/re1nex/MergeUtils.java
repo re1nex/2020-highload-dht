@@ -4,6 +4,7 @@ import one.nio.http.Response;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -18,6 +19,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 final class MergeUtils {
 
+    @NotNull
+    private static final Logger logger = LoggerFactory.getLogger(MergeUtils.class);
+
     private MergeUtils() {
     }
 
@@ -25,7 +29,6 @@ final class MergeUtils {
                                       @NotNull final HttpClient client,
                                       @NotNull final String id,
                                       @NotNull final ExecutorService executorService,
-                                      @NotNull final Logger logger,
                                       final int ack) {
         int numResponses = 0;
         int numNotFoundResponses = 0;
@@ -44,7 +47,7 @@ final class MergeUtils {
             numResponses++;
         }
         if (numNotFoundResponses != numResponses) {
-            repair(last, responses, client, executorService, id, logger);
+            repair(last, responses, client, executorService, id);
         }
         return getResponseFromValues(numResponses,
                 ack,
@@ -56,23 +59,11 @@ final class MergeUtils {
                        @NotNull final Collection<ResponseBuilder> responses,
                        @NotNull final HttpClient client,
                        @NotNull final ExecutorService executorService,
-                       @NotNull final String id,
-                       @NotNull final Logger logger) {
+                       @NotNull final String id) {
         if (lastResponse.isTombstone()) {
             for (final ResponseBuilder response : responses) {
                 if (response.getStatusCode() != 404 && !response.isTombstone()) {
-                    client.sendAsync(ApiUtils.repairRequestBuilder(response.getNode(),
-                            id,
-                            lastResponse.getGeneration())
-                            .DELETE()
-                            .build(), HttpResponse.BodyHandlers.ofString())
-                            .thenApplyAsync(HttpResponse::body, executorService)
-                            .whenCompleteAsync((res, err) -> {
-                                if (err != null) {
-                                    logger.error("Cannot repair replica: " + response.getNode(), err);
-                                }
-                            }, executorService)
-                            .isCancelled();
+                    repairDelete(lastResponse, response, client, executorService, id);
                 }
             }
         } else {
@@ -80,22 +71,48 @@ final class MergeUtils {
                 if (response.getStatusCode() == 404
                         || response.isTombstone()
                         || !Arrays.equals(response.getValue(), lastResponse.getValue())) {
-                    client.sendAsync(ApiUtils.repairRequestBuilder(response.getNode(),
-                            id,
-                            lastResponse.getGeneration())
-                            .PUT(HttpRequest.BodyPublishers.ofByteArray(lastResponse.getValue()))
-                            .build(), HttpResponse.BodyHandlers.ofString())
-                            .thenApplyAsync(HttpResponse::body, executorService)
-                            .whenCompleteAsync((res, err) -> {
-                                if (err != null) {
-                                    logger.error("Cannot repair replica: " + response.getNode(), err);
-                                }
-                            }, executorService)
-                            .isCancelled();
+                    repairPut(lastResponse, response, client, executorService, id);
                 }
             }
         }
+    }
 
+    static void repairPut(@NonNull final ResponseBuilder lastResponse,
+                          @NotNull final ResponseBuilder response,
+                          @NotNull final HttpClient client,
+                          @NotNull final ExecutorService executorService,
+                          @NotNull final String id) {
+        client.sendAsync(ApiUtils.repairRequestBuilder(response.getNode(),
+                id,
+                lastResponse.getGeneration())
+                .PUT(HttpRequest.BodyPublishers.ofByteArray(lastResponse.getValue()))
+                .build(), HttpResponse.BodyHandlers.ofString())
+                .thenApplyAsync(HttpResponse::body, executorService)
+                .whenCompleteAsync((res, err) -> {
+                    if (err != null) {
+                        logger.error("Cannot repair replica: " + response.getNode(), err);
+                    }
+                }, executorService)
+                .isCancelled();
+    }
+
+    static void repairDelete(@NonNull final ResponseBuilder lastResponse,
+                             @NotNull final ResponseBuilder response,
+                             @NotNull final HttpClient client,
+                             @NotNull final ExecutorService executorService,
+                             @NotNull final String id) {
+        client.sendAsync(ApiUtils.repairRequestBuilder(response.getNode(),
+                id,
+                lastResponse.getGeneration())
+                .DELETE()
+                .build(), HttpResponse.BodyHandlers.ofString())
+                .thenApplyAsync(HttpResponse::body, executorService)
+                .whenCompleteAsync((res, err) -> {
+                    if (err != null) {
+                        logger.error("Cannot repair replica: " + response.getNode(), err);
+                    }
+                }, executorService)
+                .isCancelled();
     }
 
     static Response getResponseFromValues(final int numResponses,

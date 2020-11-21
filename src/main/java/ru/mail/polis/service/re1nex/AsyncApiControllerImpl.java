@@ -29,7 +29,7 @@ import java.util.concurrent.Executors;
 
 class AsyncApiControllerImpl {
     @NotNull
-    private static final String emptyString = "";
+    private static final String EMPTY_STRING = "";
     @NotNull
     private final Topology<String> topology;
     @NotNull
@@ -40,21 +40,6 @@ class AsyncApiControllerImpl {
     private final HttpClient client;
     @NotNull
     private final ExecutorService executor;
-
-    interface LocalResponse {
-        @NotNull
-        CompletableFuture<ResponseBuilder> handleLocalResponse();
-    }
-
-    interface RequestBuilder {
-        @NotNull
-        HttpRequest requestBuild(@NotNull final String node);
-    }
-
-    interface MergeResponse {
-        @NotNull
-        Response mergeResponse(@NotNull final Collection<ResponseBuilder> responses);
-    }
 
     AsyncApiControllerImpl(@NotNull final DAO dao,
                            @NotNull final Topology<String> topology,
@@ -97,33 +82,6 @@ class AsyncApiControllerImpl {
             return;
         }
         final int ack = replicaInfo.getAck();
-        handleResponses(id, session, request, ack, nodes);
-    }
-
-    void handleResponseLocal(@NotNull final String id,
-                             @NotNull final HttpSession session,
-                             @NotNull final Request request,
-                             @Nullable final String timestamp) {
-        switch (request.getMethod()) {
-            case Request.METHOD_GET:
-                ApiUtils.sendResponse(session, get(id), logger);
-                break;
-            case Request.METHOD_PUT:
-                ApiUtils.sendResponse(session, put(id, request, timestamp), logger);
-                break;
-            case Request.METHOD_DELETE:
-                ApiUtils.sendResponse(session, delete(id, timestamp), logger);
-                break;
-            default:
-                break;
-        }
-    }
-
-    private void handleResponses(@NotNull final String id,
-                                 @NotNull final HttpSession session,
-                                 @NotNull final Request request,
-                                 final int ack,
-                                 @NotNull final Set<String> nodes) {
         switch (request.getMethod()) {
             case Request.METHOD_GET: {
                 final List<CompletableFuture<ResponseBuilder>> responses = handleResponses(nodes,
@@ -138,14 +96,13 @@ class AsyncApiControllerImpl {
                                 client,
                                 id,
                                 executor,
-                                logger,
                                 ack),
                         ack);
                 break;
             }
             case Request.METHOD_DELETE: {
                 final List<CompletableFuture<ResponseBuilder>> responses = handleResponses(nodes,
-                        () -> delete(id, emptyString),
+                        () -> delete(id, EMPTY_STRING),
                         node -> ApiUtils.proxyRequestBuilder(node, id)
                                 .DELETE()
                                 .build(),
@@ -162,7 +119,7 @@ class AsyncApiControllerImpl {
             }
             case Request.METHOD_PUT: {
                 final List<CompletableFuture<ResponseBuilder>> responses = handleResponses(nodes,
-                        () -> put(id, request, emptyString),
+                        () -> put(id, request, EMPTY_STRING),
                         node -> ApiUtils.proxyRequestBuilder(node, id)
                                 .PUT(HttpRequest.BodyPublishers.ofByteArray(request.getBody()))
                                 .build(),
@@ -185,11 +142,30 @@ class AsyncApiControllerImpl {
         }
     }
 
+    void handleResponseLocal(@NotNull final String id,
+                             @NotNull final HttpSession session,
+                             @NotNull final Request request,
+                             @Nullable final String timestamp) {
+        switch (request.getMethod()) {
+            case Request.METHOD_GET:
+                ApiUtils.sendResponse(session, get(id), logger);
+                break;
+            case Request.METHOD_PUT:
+                ApiUtils.sendResponse(session, put(id, request, timestamp), logger);
+                break;
+            case Request.METHOD_DELETE:
+                ApiUtils.sendResponse(session, delete(id, timestamp), logger);
+                break;
+            default:
+                break;
+        }
+    }
+
     @NotNull
     private List<CompletableFuture<ResponseBuilder>>
     handleResponses(@NotNull final Set<String> nodes,
-                    @NotNull final LocalResponse response,
-                    @NotNull final RequestBuilder requestBuilder,
+                    @NotNull final ApiUtils.LocalResponse response,
+                    @NotNull final ApiUtils.RequestBuilder requestBuilder,
                     @NotNull final HttpResponse.BodyHandler<ResponseBuilder> handler) {
         final List<CompletableFuture<ResponseBuilder>> responses = new ArrayList<>();
         if (topology.removeLocal(nodes)) {
@@ -274,7 +250,7 @@ class AsyncApiControllerImpl {
 
     private void mergeAndSendResponse(@NotNull final HttpSession session,
                                       @NotNull final List<CompletableFuture<ResponseBuilder>> responses,
-                                      @NotNull final MergeResponse mergeResponse,
+                                      @NotNull final ApiUtils.MergeResponse mergeResponse,
                                       final int ack) {
         final CompletableFuture<Collection<ResponseBuilder>> completableFuture =
                 MergeUtils.collateFutures(responses, ack, executor).whenCompleteAsync((res, err) -> {
