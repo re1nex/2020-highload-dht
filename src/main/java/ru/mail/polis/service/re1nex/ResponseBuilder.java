@@ -64,7 +64,11 @@ final class ResponseBuilder {
     Response getResponse() {
         final Response response;
         if (onlyStatus) {
-            return new Response(resultCode, Response.EMPTY);
+            response = new Response(resultCode, Response.EMPTY);
+            if (node != null) {
+                response.addHeader(ApiUtils.FROM_NODE + ": " + node);
+            }
+            return response;
         } else if (isTombstone) {
             response = new Response(Response.OK, Response.EMPTY);
             response.addHeader(ApiUtils.TOMBSTONE + ": True");
