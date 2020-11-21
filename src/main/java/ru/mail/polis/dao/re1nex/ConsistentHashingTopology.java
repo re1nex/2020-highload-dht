@@ -123,4 +123,10 @@ public class ConsistentHashingTopology implements Topology<String> {
         }
         return h;
     }
+
+    @NotNull
+    @Override
+    public String getLocal() {
+        return local;
+    }
 }

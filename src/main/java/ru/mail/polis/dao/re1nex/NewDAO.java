@@ -117,7 +117,24 @@ public class NewDAO implements DAO {
         lock.readLock().lock();
         try {
             needsFlush = tables.memTable.sizeInBytes() >= flushThreshold;
-            tables.memTable.upsert(key, value);
+            tables.memTable.upsert(key, value, System.currentTimeMillis());
+        } finally {
+            lock.readLock().unlock();
+        }
+        if (needsFlush) {
+            flush();
+        }
+    }
+
+    @Override
+    public void upsert(@NotNull final ByteBuffer key,
+                       @NotNull final ByteBuffer value,
+                       final long timestamp) throws IOException {
+        final boolean needsFlush;
+        lock.readLock().lock();
+        try {
+            needsFlush = tables.memTable.sizeInBytes() >= flushThreshold;
+            tables.memTable.upsert(key, value, timestamp);
         } finally {
             lock.readLock().unlock();
         }
@@ -132,7 +149,22 @@ public class NewDAO implements DAO {
         lock.readLock().lock();
         try {
             needsFlush = tables.memTable.sizeInBytes() >= flushThreshold;
-            tables.memTable.remove(key);
+            tables.memTable.remove(key, System.currentTimeMillis());
+        } finally {
+            lock.readLock().unlock();
+        }
+        if (needsFlush) {
+            flush();
+        }
+    }
+
+    @Override
+    public void remove(@NotNull final ByteBuffer key, final long timestamp) throws IOException {
+        final boolean needsFlush;
+        lock.readLock().lock();
+        try {
+            needsFlush = tables.memTable.sizeInBytes() >= flushThreshold;
+            tables.memTable.remove(key, timestamp);
         } finally {
             lock.readLock().unlock();
         }

@@ -23,12 +23,13 @@ public interface Table {
      */
     void upsert(
             @NotNull ByteBuffer key,
-            @NotNull ByteBuffer value) throws IOException;
+            @NotNull ByteBuffer value,
+            final long timestamp) throws IOException;
 
     /**
      * Removes value by given key.
      */
-    void remove(@NotNull ByteBuffer key) throws IOException;
+    void remove(@NotNull ByteBuffer key, final long timestamp) throws IOException;
 
     void close() throws IOException;
 }

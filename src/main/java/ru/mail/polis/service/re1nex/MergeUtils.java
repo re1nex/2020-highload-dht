@@ -3,9 +3,14 @@ package ru.mail.polis.service.re1nex;
 import one.nio.http.Response;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
 
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -16,40 +21,14 @@ final class MergeUtils {
     private MergeUtils() {
     }
 
-    static Response mergeGetResponses(@NotNull final List<Response> responses, final int ack) {
+    static Response mergeGetAndRepair(@NotNull final Collection<ResponseBuilder> responses,
+                                      @NotNull final HttpClient client,
+                                      @NotNull final String id,
+                                      @NotNull final ExecutorService executorService,
+                                      @NotNull final Logger logger,
+                                      final int ack) {
         int numResponses = 0;
         int numNotFoundResponses = 0;
-        boolean lastTombstone = false;
-        long lastGeneration = 0;
-        Response last = new Response(Response.NOT_FOUND, Response.EMPTY);
-        for (final Response response : responses) {
-            if (response.getStatus() == 404) {
-                numNotFoundResponses++;
-            } else if (response.getStatus() == 200) {
-                final long generation = Long.parseLong(response.getHeader(ApiUtils.GENERATION));
-                if (lastGeneration < generation || lastGeneration == 0) {
-                    lastGeneration = generation;
-                    if (response.getHeader(ApiUtils.TOMBSTONE) == null) {
-                        lastTombstone = false;
-                        last = response;
-                    } else {
-                        lastTombstone = true;
-                    }
-                }
-            }
-            numResponses++;
-        }
-        return getResponseFromValues(numResponses,
-                ack,
-                lastTombstone,
-                numNotFoundResponses,
-                last);
-    }
-
-    static Response mergeGetResponseBuilders(@NotNull final Collection<ResponseBuilder> responses, final int ack) {
-        int numResponses = 0;
-        int numNotFoundResponses = 0;
-        boolean lastTombstone = false;
         long lastGeneration = 0;
         ResponseBuilder last = new ResponseBuilder(Response.NOT_FOUND);
         for (final ResponseBuilder response : responses) {
@@ -59,56 +38,77 @@ final class MergeUtils {
                 final long generation = response.getGeneration();
                 if (lastGeneration < generation || lastGeneration == 0) {
                     lastGeneration = generation;
-                    if (response.isTombstone()) {
-                        lastTombstone = true;
-                    } else {
-                        lastTombstone = false;
-                        last = response;
-                    }
+                    last = response;
                 }
             }
             numResponses++;
         }
+        if (numNotFoundResponses != numResponses) {
+            repair(last, responses, client, executorService, id, logger);
+        }
         return getResponseFromValues(numResponses,
                 ack,
-                lastTombstone,
                 numNotFoundResponses,
-                last.getResponse());
+                last);
+    }
+
+    static void repair(@NonNull final ResponseBuilder lastResponse,
+                       @NotNull final Collection<ResponseBuilder> responses,
+                       @NotNull final HttpClient client,
+                       @NotNull final ExecutorService executorService,
+                       @NotNull final String id,
+                       @NotNull final Logger logger) {
+        if (lastResponse.isTombstone()) {
+            for (final ResponseBuilder response : responses) {
+                if (response.getStatusCode() != 404 && !response.isTombstone()) {
+                    client.sendAsync(ApiUtils.repairRequestBuilder(response.getNode(),
+                            id,
+                            lastResponse.getGeneration())
+                            .DELETE()
+                            .build(), HttpResponse.BodyHandlers.ofString())
+                            .thenApplyAsync(HttpResponse::body, executorService)
+                            .whenCompleteAsync((res, err) -> {
+                                if (err != null) {
+                                    logger.error("Cannot repair replica: " + response.getNode(), err);
+                                }
+                            }, executorService)
+                            .isCancelled();
+                }
+            }
+        } else {
+            for (final ResponseBuilder response : responses) {
+                if (response.getStatusCode() == 404
+                        || response.isTombstone()
+                        || !Arrays.equals(response.getValue(), lastResponse.getValue())) {
+                    client.sendAsync(ApiUtils.repairRequestBuilder(response.getNode(),
+                            id,
+                            lastResponse.getGeneration())
+                            .PUT(HttpRequest.BodyPublishers.ofByteArray(lastResponse.getValue()))
+                            .build(), HttpResponse.BodyHandlers.ofString())
+                            .thenApplyAsync(HttpResponse::body, executorService)
+                            .whenCompleteAsync((res, err) -> {
+                                if (err != null) {
+                                    logger.error("Cannot repair replica: " + response.getNode(), err);
+                                }
+                            }, executorService)
+                            .isCancelled();
+                }
+            }
+        }
+
     }
 
     static Response getResponseFromValues(final int numResponses,
                                           final int ack,
-                                          final boolean lastTombstone,
                                           final int numNotFoundResponses,
-                                          @NonNull final Response lastResponse) {
+                                          @NonNull final ResponseBuilder lastResponse) {
         if (numResponses < ack) {
             return new Response(ApiUtils.NOT_ENOUGH_REPLICAS, Response.EMPTY);
         }
-        if (lastTombstone || numResponses == numNotFoundResponses) {
+        if (lastResponse.isTombstone() || numResponses == numNotFoundResponses) {
             return new Response(Response.NOT_FOUND, Response.EMPTY);
         }
-        return Response.ok(lastResponse.getBody());
-    }
-
-    static Response mergePutDeleteResponses(@NotNull final List<Response> responses,
-                                            final int ack,
-                                            final String statusOk) {
-        final int statusCode;
-        try {
-            statusCode = ApiUtils.getStatusCodeFromStatus(statusOk);
-        } catch (IllegalArgumentException e) {
-            return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
-        }
-        int numResponses = 0;
-        for (final Response response : responses) {
-            if (response.getStatus() == statusCode) {
-                numResponses++;
-            }
-        }
-        if (numResponses < ack) {
-            return new Response(ApiUtils.NOT_ENOUGH_REPLICAS, Response.EMPTY);
-        }
-        return new Response(statusOk, Response.EMPTY);
+        return Response.ok(Objects.requireNonNull(lastResponse.getValue()));
     }
 
     static Response mergePutDeleteResponseBuilders(@NotNull final Collection<ResponseBuilder> responses,

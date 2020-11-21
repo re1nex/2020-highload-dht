@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 final class ResponseBuilder {
+    @Nullable
+    private String node;
     private final boolean isTombstone;
     private final long generation;
     @Nullable
@@ -33,18 +35,28 @@ final class ResponseBuilder {
 
     ResponseBuilder(@NotNull final String resultCode,
                     final long generation,
-                    @Nullable final byte[] value) {
+                    @Nullable final byte[] value,
+                    @NotNull final String node) {
         this(resultCode, generation, value == null, value);
+        this.node = node;
     }
 
     ResponseBuilder(@NotNull final String resultCode,
+                    @NotNull final String node,
                     final long generation,
                     final boolean isTombstone) {
         this(resultCode, generation, isTombstone, null);
+        this.node = node;
     }
 
     ResponseBuilder(@NotNull final String resultCode) {
         this(resultCode, 0, false, null);
+        this.onlyStatus = true;
+    }
+
+    ResponseBuilder(@NotNull final String resultCode, @NotNull final String node) {
+        this(resultCode, 0, false, null);
+        this.node = node;
         this.onlyStatus = true;
     }
 
@@ -58,6 +70,9 @@ final class ResponseBuilder {
             response.addHeader(ApiUtils.TOMBSTONE + ": True");
         } else {
             response = new Response(Response.OK, Objects.requireNonNull(value));
+        }
+        if (node != null) {
+            response.addHeader(ApiUtils.FROM_NODE + ": " + node);
         }
         response.addHeader(ApiUtils.GENERATION + ": " + generation);
         return response;
@@ -74,5 +89,10 @@ final class ResponseBuilder {
     @Nullable
     public byte[] getValue() {
         return value == null ? null : value.clone();
+    }
+
+    @Nullable
+    public String getNode() {
+        return node;
     }
 }

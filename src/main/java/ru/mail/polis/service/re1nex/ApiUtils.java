@@ -27,7 +27,9 @@ final class ApiUtils {
     @NotNull
     static final String PROXY_FOR_CLIENT = "X-Proxy-For";
     @NotNull
-    static final Duration TIMEOUT = Duration.ofSeconds(10);
+    static final String FROM_NODE = "from-node";
+    @NotNull
+    static final Duration TIMEOUT = Duration.ofSeconds(1);
     static final int ACCEPTED_STATUS_CODE = 202;
     static final int CREATED_STATUS_CODE = 201;
 
@@ -87,12 +89,30 @@ final class ApiUtils {
             @NotNull final String id
     ) {
         try {
-            return HttpRequest.newBuilder()
-                    .uri(new URI(node + "/v0/entity?id=" + id))
-                    .header(PROXY_FOR_CLIENT, "True")
-                    .timeout(TIMEOUT);
+            return baseRequestBuilder()
+                    .uri(new URI(node + "/v0/entity?id=" + id));
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @NotNull
+    static HttpRequest.Builder repairRequestBuilder(
+            @NotNull final String node,
+            @NotNull final String id,
+            final long timestamp
+    ) {
+        try {
+            return baseRequestBuilder()
+                    .uri(new URI(node + "/v0/entity?id=" + id + "&timestamp=" + timestamp));
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static HttpRequest.Builder baseRequestBuilder() {
+        return HttpRequest.newBuilder()
+                .header(PROXY_FOR_CLIENT, "True")
+                .timeout(TIMEOUT);
     }
 }

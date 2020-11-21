@@ -22,4 +22,7 @@ public interface Topology<N> {
     boolean removeLocal(@NotNull final Set<N> nodes);
 
     int getUniqueSize();
+
+    @NotNull
+    N getLocal();
 }

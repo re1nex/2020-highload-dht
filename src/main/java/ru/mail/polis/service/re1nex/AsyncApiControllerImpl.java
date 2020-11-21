@@ -5,6 +5,7 @@ import one.nio.http.HttpSession;
 import one.nio.http.Request;
 import one.nio.http.Response;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import ru.mail.polis.dao.DAO;
 import ru.mail.polis.dao.re1nex.Topology;
@@ -15,6 +16,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -25,13 +27,19 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-class AsyncApiControllerImpl extends ApiController {
+class AsyncApiControllerImpl {
+    @NotNull
+    private static final String emptyString = "";
+    @NotNull
+    private final Topology<String> topology;
+    @NotNull
+    private final Logger logger;
     @NotNull
     private final DAO dao;
     @NotNull
     private final HttpClient client;
     @NotNull
-    protected final ExecutorService executor;
+    private final ExecutorService executor;
 
     interface LocalResponse {
         @NotNull
@@ -52,7 +60,8 @@ class AsyncApiControllerImpl extends ApiController {
                            @NotNull final Topology<String> topology,
                            @NotNull final Logger logger,
                            @NotNull final ExecutorService executor) {
-        super(topology, logger);
+        this.topology = topology;
+        this.logger = logger;
         this.dao = dao;
         this.executor = executor;
         final Executor clientExecutor =
@@ -68,12 +77,53 @@ class AsyncApiControllerImpl extends ApiController {
                 .build();
     }
 
-    @Override
-    protected void handleResponses(@NotNull final String id,
-                                   @NotNull final HttpSession session,
-                                   @NotNull final Request request,
-                                   final int ack,
-                                   @NotNull final Set<String> nodes) {
+    void sendReplica(@NotNull final String id,
+                     @NotNull final ReplicaInfo replicaInfo,
+                     @NotNull final HttpSession session,
+                     @NotNull final Request request) {
+        final int from = replicaInfo.getFrom();
+        final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
+        if (replicaInfo.getAck() > topology.getUniqueSize()) {
+            ApiUtils.sendResponse(session,
+                    new Response(ApiUtils.NOT_ENOUGH_REPLICAS, Response.EMPTY),
+                    logger);
+        }
+        final Set<String> nodes;
+        try {
+            nodes = topology.severalNodesForKey(key, from);
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("Can't get hash", e);
+            ApiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
+            return;
+        }
+        final int ack = replicaInfo.getAck();
+        handleResponses(id, session, request, ack, nodes);
+    }
+
+    void handleResponseLocal(@NotNull final String id,
+                             @NotNull final HttpSession session,
+                             @NotNull final Request request,
+                             @Nullable final String timestamp) {
+        switch (request.getMethod()) {
+            case Request.METHOD_GET:
+                ApiUtils.sendResponse(session, get(id), logger);
+                break;
+            case Request.METHOD_PUT:
+                ApiUtils.sendResponse(session, put(id, request, timestamp), logger);
+                break;
+            case Request.METHOD_DELETE:
+                ApiUtils.sendResponse(session, delete(id, timestamp), logger);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleResponses(@NotNull final String id,
+                                 @NotNull final HttpSession session,
+                                 @NotNull final Request request,
+                                 final int ack,
+                                 @NotNull final Set<String> nodes) {
         switch (request.getMethod()) {
             case Request.METHOD_GET: {
                 final List<CompletableFuture<ResponseBuilder>> responses = handleResponses(nodes,
@@ -84,13 +134,18 @@ class AsyncApiControllerImpl extends ApiController {
                         new GetBodyHandler());
                 mergeAndSendResponse(session,
                         responses,
-                        responseBuilders -> MergeUtils.mergeGetResponseBuilders(responseBuilders, ack),
+                        responseBuilders -> MergeUtils.mergeGetAndRepair(responseBuilders,
+                                client,
+                                id,
+                                executor,
+                                logger,
+                                ack),
                         ack);
                 break;
             }
             case Request.METHOD_DELETE: {
                 final List<CompletableFuture<ResponseBuilder>> responses = handleResponses(nodes,
-                        () -> delete(id),
+                        () -> delete(id, emptyString),
                         node -> ApiUtils.proxyRequestBuilder(node, id)
                                 .DELETE()
                                 .build(),
@@ -107,7 +162,7 @@ class AsyncApiControllerImpl extends ApiController {
             }
             case Request.METHOD_PUT: {
                 final List<CompletableFuture<ResponseBuilder>> responses = handleResponses(nodes,
-                        () -> put(id, request),
+                        () -> put(id, request, emptyString),
                         node -> ApiUtils.proxyRequestBuilder(node, id)
                                 .PUT(HttpRequest.BodyPublishers.ofByteArray(request.getBody()))
                                 .build(),
@@ -150,19 +205,19 @@ class AsyncApiControllerImpl extends ApiController {
         return responses;
     }
 
-    @Override
-    protected void put(@NotNull final String id,
-                       @NotNull final HttpSession session,
-                       @NotNull final Request request) {
-        ApiUtils.sendResponse(session, put(id, request), logger);
-    }
-
     @NotNull
     private CompletableFuture<ResponseBuilder> put(@NotNull final String id,
-                                                   @NotNull final Request request) {
+                                                   @NotNull final Request request,
+                                                   @Nullable final String timestamp) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                dao.upsert(ByteBufferUtils.getByteBufferKey(id), ByteBuffer.wrap(request.getBody()));
+                if (timestamp == null || timestamp.isEmpty()) {
+                    dao.upsert(ByteBufferUtils.getByteBufferKey(id), ByteBuffer.wrap(request.getBody()));
+                } else {
+                    dao.upsert(ByteBufferUtils.getByteBufferKey(id),
+                            ByteBuffer.wrap(request.getBody()),
+                            Long.parseLong(timestamp));
+                }
                 return new ResponseBuilder(Response.CREATED);
             } catch (IOException e) {
                 logger.error("PUT failed! Cannot put the element: {}. Request size: {}. Cause: {}",
@@ -172,12 +227,6 @@ class AsyncApiControllerImpl extends ApiController {
         }, executor);
     }
 
-    @Override
-    protected void get(@NotNull final String id,
-                       @NotNull final HttpSession session) {
-        ApiUtils.sendResponse(session, get(id), logger);
-    }
-
     @NotNull
     private CompletableFuture<ResponseBuilder> get(@NotNull final String id) {
         return CompletableFuture.supplyAsync(() -> {
@@ -185,13 +234,18 @@ class AsyncApiControllerImpl extends ApiController {
                 final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
                 final Value value = dao.getValue(key);
                 if (value.isTombstone()) {
-                    return new ResponseBuilder(Response.OK, value.getTimestamp(), true);
+                    return new ResponseBuilder(Response.OK,
+                            topology.getLocal(),
+                            value.getTimestamp(),
+                            true);
                 } else {
-                    return new ResponseBuilder(Response.OK, value.getTimestamp(),
-                            ByteBufferUtils.byteBufferToByte(value.getData()));
+                    return new ResponseBuilder(Response.OK,
+                            value.getTimestamp(),
+                            ByteBufferUtils.byteBufferToByte(value.getData()),
+                            topology.getLocal());
                 }
             } catch (NoSuchElementException e) {
-                return new ResponseBuilder(Response.NOT_FOUND);
+                return new ResponseBuilder(Response.NOT_FOUND, topology.getLocal());
             } catch (IOException e) {
                 logger.error("GET element " + id, e);
                 throw new RuntimeException(e);
@@ -199,17 +253,16 @@ class AsyncApiControllerImpl extends ApiController {
         }, executor);
     }
 
-    @Override
-    protected void delete(@NotNull final String id,
-                          @NotNull final HttpSession session) {
-        ApiUtils.sendResponse(session, delete(id), logger);
-    }
-
     @NotNull
-    private CompletableFuture<ResponseBuilder> delete(@NotNull final String id) {
+    private CompletableFuture<ResponseBuilder> delete(@NotNull final String id,
+                                                      @Nullable final String timestamp) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                dao.remove(ByteBufferUtils.getByteBufferKey(id));
+                if (timestamp == null || timestamp.isEmpty()) {
+                    dao.remove(ByteBufferUtils.getByteBufferKey(id));
+                } else {
+                    dao.remove(ByteBufferUtils.getByteBufferKey(id), Long.parseLong(timestamp));
+                }
                 return new ResponseBuilder(Response.ACCEPTED);
             } catch (IOException e) {
                 logger.error("DELETE failed! Cannot get the element {}.\n Error: {}",

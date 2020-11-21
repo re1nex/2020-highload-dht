@@ -29,18 +29,20 @@ final class MemTable implements Table {
     }
 
     @Override
-    public void upsert(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value) throws IOException {
+    public void upsert(@NotNull final ByteBuffer key,
+                       @NotNull final ByteBuffer value,
+                       final long timestamp) throws IOException {
         if (map.containsKey(key)) {
             size.set(size.get() + value.remaining() + Long.BYTES);
         } else {
             size.set(size.get() + value.remaining() + key.remaining() + Long.BYTES);
         }
-        map.put(key.duplicate(), new Value(System.currentTimeMillis(), value.duplicate()));
+        map.put(key.duplicate(), new Value(timestamp, value.duplicate()));
     }
 
     @Override
-    public void remove(@NotNull final ByteBuffer key) throws IOException {
-        final Value previous = map.put(key.duplicate(), new Value(System.currentTimeMillis()));
+    public void remove(@NotNull final ByteBuffer key, final long timestamp) throws IOException {
+        final Value previous = map.put(key.duplicate(), new Value(timestamp));
         if (previous == null) {
             size.set(size.get() + key.remaining());
         } else if (!previous.isTombstone()) {

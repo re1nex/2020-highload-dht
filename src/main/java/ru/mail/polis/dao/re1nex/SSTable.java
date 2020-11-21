@@ -103,12 +103,14 @@ final class SSTable implements Table {
     }
 
     @Override
-    public void upsert(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value) throws IOException {
+    public void upsert(@NotNull final ByteBuffer key,
+                       @NotNull final ByteBuffer value,
+                       final long timestamp) throws IOException {
         throw new UnsupportedOperationException("Immutable");
     }
 
     @Override
-    public void remove(@NotNull final ByteBuffer key) throws IOException {
+    public void remove(@NotNull final ByteBuffer key, final long timestamp) throws IOException {
         throw new UnsupportedOperationException("Immutable");
     }
 
