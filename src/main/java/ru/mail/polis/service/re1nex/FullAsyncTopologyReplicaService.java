@@ -101,7 +101,7 @@ public class FullAsyncTopologyReplicaService extends HttpServer implements Servi
         executeTask(() -> {
             if (id.isEmpty()) {
                 logger.info("Id is empty!");
-                ApiUtils.sendErrorResponse(session, Response.BAD_REQUEST, logger);
+                ApiUtils.sendErrorResponse(session, Response.BAD_REQUEST);
                 return;
             }
             if (request.getHeader(ApiUtils.PROXY_FOR) == null) {
@@ -113,7 +113,7 @@ public class FullAsyncTopologyReplicaService extends HttpServer implements Servi
                         replicaInfo = ReplicaInfo.of(replicas);
                     } catch (IllegalArgumentException exception) {
                         logger.info("Wrong params replica", exception);
-                        ApiUtils.sendResponse(session, new Response(Response.BAD_REQUEST, Response.EMPTY), logger);
+                        ApiUtils.sendResponse(session, new Response(Response.BAD_REQUEST, Response.EMPTY));
                         return;
                     }
                 }
@@ -152,7 +152,7 @@ public class FullAsyncTopologyReplicaService extends HttpServer implements Servi
             executor.execute(task);
         } catch (RejectedExecutionException e) {
             logger.error("Execute failed!", e);
-            ApiUtils.sendErrorResponse(session, Response.SERVICE_UNAVAILABLE, logger);
+            ApiUtils.sendErrorResponse(session, Response.SERVICE_UNAVAILABLE);
         }
     }
 }

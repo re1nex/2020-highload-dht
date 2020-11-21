@@ -9,18 +9,14 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import ru.mail.polis.dao.DAO;
 import ru.mail.polis.dao.re1nex.Topology;
-import ru.mail.polis.dao.re1nex.Value;
 
-import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -66,26 +62,24 @@ class AsyncApiControllerImpl {
                      @NotNull final ReplicaInfo replicaInfo,
                      @NotNull final HttpSession session,
                      @NotNull final Request request) {
-        final int from = replicaInfo.getFrom();
-        final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
         if (replicaInfo.getAck() > topology.getUniqueSize()) {
             ApiUtils.sendResponse(session,
-                    new Response(ApiUtils.NOT_ENOUGH_REPLICAS, Response.EMPTY),
-                    logger);
+                    new Response(ApiUtils.NOT_ENOUGH_REPLICAS, Response.EMPTY)
+            );
         }
         final Set<String> nodes;
         try {
-            nodes = topology.severalNodesForKey(key, from);
+            nodes = topology.severalNodesForKey(ByteBufferUtils.getByteBufferKey(id), replicaInfo.getFrom());
         } catch (NoSuchAlgorithmException e) {
             logger.error("Can't get hash", e);
-            ApiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
+            ApiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR);
             return;
         }
         final int ack = replicaInfo.getAck();
         switch (request.getMethod()) {
             case Request.METHOD_GET: {
                 final List<CompletableFuture<ResponseBuilder>> responses = handleResponses(nodes,
-                        () -> get(id),
+                        () -> ApiUtils.get(id, dao, executor, topology),
                         node -> ApiUtils.proxyRequestBuilder(node, id)
                                 .GET()
                                 .build(),
@@ -102,7 +96,7 @@ class AsyncApiControllerImpl {
             }
             case Request.METHOD_DELETE: {
                 final List<CompletableFuture<ResponseBuilder>> responses = handleResponses(nodes,
-                        () -> delete(id, EMPTY_STRING),
+                        () -> ApiUtils.delete(id, EMPTY_STRING, dao, executor),
                         node -> ApiUtils.proxyRequestBuilder(node, id)
                                 .DELETE()
                                 .build(),
@@ -119,7 +113,7 @@ class AsyncApiControllerImpl {
             }
             case Request.METHOD_PUT: {
                 final List<CompletableFuture<ResponseBuilder>> responses = handleResponses(nodes,
-                        () -> put(id, request, EMPTY_STRING),
+                        () -> ApiUtils.put(id, request, EMPTY_STRING, dao, executor),
                         node -> ApiUtils.proxyRequestBuilder(node, id)
                                 .PUT(HttpRequest.BodyPublishers.ofByteArray(request.getBody()))
                                 .build(),
@@ -136,8 +130,8 @@ class AsyncApiControllerImpl {
             }
             default:
                 ApiUtils.sendResponse(session,
-                        new Response(Response.BAD_REQUEST, Response.EMPTY),
-                        logger);
+                        new Response(Response.BAD_REQUEST, Response.EMPTY)
+                );
                 break;
         }
     }
@@ -148,13 +142,13 @@ class AsyncApiControllerImpl {
                              @Nullable final String timestamp) {
         switch (request.getMethod()) {
             case Request.METHOD_GET:
-                ApiUtils.sendResponse(session, get(id), logger);
+                ApiUtils.sendResponse(session, ApiUtils.get(id, dao, executor, topology));
                 break;
             case Request.METHOD_PUT:
-                ApiUtils.sendResponse(session, put(id, request, timestamp), logger);
+                ApiUtils.sendResponse(session, ApiUtils.put(id, request, timestamp, dao, executor));
                 break;
             case Request.METHOD_DELETE:
-                ApiUtils.sendResponse(session, delete(id, timestamp), logger);
+                ApiUtils.sendResponse(session, ApiUtils.delete(id, timestamp, dao, executor));
                 break;
             default:
                 break;
@@ -181,73 +175,6 @@ class AsyncApiControllerImpl {
         return responses;
     }
 
-    @NotNull
-    private CompletableFuture<ResponseBuilder> put(@NotNull final String id,
-                                                   @NotNull final Request request,
-                                                   @Nullable final String timestamp) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                if (timestamp == null || timestamp.isEmpty()) {
-                    dao.upsert(ByteBufferUtils.getByteBufferKey(id), ByteBuffer.wrap(request.getBody()));
-                } else {
-                    dao.upsert(ByteBufferUtils.getByteBufferKey(id),
-                            ByteBuffer.wrap(request.getBody()),
-                            Long.parseLong(timestamp));
-                }
-                return new ResponseBuilder(Response.CREATED);
-            } catch (IOException e) {
-                logger.error("PUT failed! Cannot put the element: {}. Request size: {}. Cause: {}",
-                        id, request.getBody().length, e.getCause());
-                throw new RuntimeException(e);
-            }
-        }, executor);
-    }
-
-    @NotNull
-    private CompletableFuture<ResponseBuilder> get(@NotNull final String id) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
-                final Value value = dao.getValue(key);
-                if (value.isTombstone()) {
-                    return new ResponseBuilder(Response.OK,
-                            topology.getLocal(),
-                            value.getTimestamp(),
-                            true);
-                } else {
-                    return new ResponseBuilder(Response.OK,
-                            value.getTimestamp(),
-                            ByteBufferUtils.byteBufferToByte(value.getData()),
-                            topology.getLocal());
-                }
-            } catch (NoSuchElementException e) {
-                return new ResponseBuilder(Response.NOT_FOUND, topology.getLocal());
-            } catch (IOException e) {
-                logger.error("GET element " + id, e);
-                throw new RuntimeException(e);
-            }
-        }, executor);
-    }
-
-    @NotNull
-    private CompletableFuture<ResponseBuilder> delete(@NotNull final String id,
-                                                      @Nullable final String timestamp) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                if (timestamp == null || timestamp.isEmpty()) {
-                    dao.remove(ByteBufferUtils.getByteBufferKey(id));
-                } else {
-                    dao.remove(ByteBufferUtils.getByteBufferKey(id), Long.parseLong(timestamp));
-                }
-                return new ResponseBuilder(Response.ACCEPTED);
-            } catch (IOException e) {
-                logger.error("DELETE failed! Cannot get the element {}.\n Error: {}",
-                        id, e.getMessage(), e);
-                throw new RuntimeException(e);
-            }
-        }, executor);
-    }
-
     private void mergeAndSendResponse(@NotNull final HttpSession session,
                                       @NotNull final List<CompletableFuture<ResponseBuilder>> responses,
                                       @NotNull final ApiUtils.MergeResponse mergeResponse,
@@ -256,13 +183,13 @@ class AsyncApiControllerImpl {
                 MergeUtils.collateFutures(responses, ack, executor).whenCompleteAsync((res, err) -> {
                     if (err == null) {
                         ApiUtils.sendResponse(session,
-                                mergeResponse.mergeResponse(res),
-                                logger);
+                                mergeResponse.mergeResponse(res)
+                        );
                     } else {
                         if (err instanceof IllegalStateException) {
-                            ApiUtils.sendErrorResponse(session, Response.GATEWAY_TIMEOUT, logger);
+                            ApiUtils.sendErrorResponse(session, Response.GATEWAY_TIMEOUT);
                         } else {
-                            ApiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
+                            ApiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR);
                         }
                     }
                 }, executor);

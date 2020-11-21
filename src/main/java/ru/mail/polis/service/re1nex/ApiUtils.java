@@ -1,18 +1,27 @@
 package ru.mail.polis.service.re1nex;
 
 import one.nio.http.HttpSession;
+import one.nio.http.Request;
 import one.nio.http.Response;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.mail.polis.dao.DAO;
+import ru.mail.polis.dao.re1nex.Topology;
+import ru.mail.polis.dao.re1nex.Value;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpRequest;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Collection;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 final class ApiUtils {
     @NonNull
@@ -31,6 +40,9 @@ final class ApiUtils {
     static final String FROM_NODE = "from-node";
     @NotNull
     static final Duration TIMEOUT = Duration.ofSeconds(1);
+    @NotNull
+    private static final Logger logger = LoggerFactory.getLogger(ApiUtils.class);
+
     static final int ACCEPTED_STATUS_CODE = 202;
     static final int CREATED_STATUS_CODE = 201;
 
@@ -64,8 +76,7 @@ final class ApiUtils {
     }
 
     static void sendResponse(@NotNull final HttpSession session,
-                             @NotNull final Response response,
-                             @NotNull final Logger logger) {
+                             @NotNull final Response response) {
         try {
             session.sendResponse(response);
         } catch (IOException e) {
@@ -74,14 +85,13 @@ final class ApiUtils {
     }
 
     static void sendResponse(@NotNull final HttpSession session,
-                             @NotNull final CompletableFuture<ResponseBuilder> responseCompletableFuture,
-                             @NotNull final Logger logger) {
+                             @NotNull final CompletableFuture<ResponseBuilder> responseCompletableFuture) {
         final CompletableFuture<ResponseBuilder> completableFuture
                 = responseCompletableFuture.whenComplete((response, throwable) -> {
             if (throwable == null) {
-                sendResponse(session, response.getResponse(), logger);
+                sendResponse(session, response.getResponse());
             } else {
-                sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
+                sendErrorResponse(session, Response.INTERNAL_ERROR);
             }
         });
         if (completableFuture.isCancelled()) {
@@ -90,8 +100,7 @@ final class ApiUtils {
     }
 
     static void sendErrorResponse(@NotNull final HttpSession session,
-                                  @NotNull final String internalError,
-                                  @NotNull final Logger logger) {
+                                  @NotNull final String internalError) {
         try {
             session.sendResponse(new Response(internalError, Response.EMPTY));
         } catch (IOException ioException) {
@@ -130,5 +139,79 @@ final class ApiUtils {
         return HttpRequest.newBuilder()
                 .header(PROXY_FOR_CLIENT, "True")
                 .timeout(TIMEOUT);
+    }
+
+    @NotNull
+    static CompletableFuture<ResponseBuilder> put(@NotNull final String id,
+                                                  @NotNull final Request request,
+                                                  @Nullable final String timestamp,
+                                                  @NotNull final DAO dao,
+                                                  @NotNull final ExecutorService executor) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                if (timestamp == null || timestamp.isEmpty()) {
+                    dao.upsert(ByteBufferUtils.getByteBufferKey(id), ByteBuffer.wrap(request.getBody()));
+                } else {
+                    dao.upsert(ByteBufferUtils.getByteBufferKey(id),
+                            ByteBuffer.wrap(request.getBody()),
+                            Long.parseLong(timestamp));
+                }
+                return new ResponseBuilder(Response.CREATED);
+            } catch (IOException e) {
+                logger.error("PUT failed! Cannot put the element: {}. Request size: {}. Cause: {}",
+                        id, request.getBody().length, e.getCause());
+                throw new RuntimeException(e);
+            }
+        }, executor);
+    }
+
+    @NotNull
+    static CompletableFuture<ResponseBuilder> get(@NotNull final String id,
+                                                  @NotNull final DAO dao,
+                                                  @NotNull final ExecutorService executor,
+                                                  @NotNull final Topology<String> topology) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                final ByteBuffer key = ByteBufferUtils.getByteBufferKey(id);
+                final Value value = dao.getValue(key);
+                if (value.isTombstone()) {
+                    return new ResponseBuilder(Response.OK,
+                            topology.getLocal(),
+                            value.getTimestamp(),
+                            true);
+                } else {
+                    return new ResponseBuilder(Response.OK,
+                            value.getTimestamp(),
+                            ByteBufferUtils.byteBufferToByte(value.getData()),
+                            topology.getLocal());
+                }
+            } catch (NoSuchElementException e) {
+                return new ResponseBuilder(Response.NOT_FOUND, topology.getLocal());
+            } catch (IOException e) {
+                logger.error("GET element " + id, e);
+                throw new RuntimeException(e);
+            }
+        }, executor);
+    }
+
+    @NotNull
+    static CompletableFuture<ResponseBuilder> delete(@NotNull final String id,
+                                                     @Nullable final String timestamp,
+                                                     @NotNull final DAO dao,
+                                                     @NotNull final ExecutorService executor) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                if (timestamp == null || timestamp.isEmpty()) {
+                    dao.remove(ByteBufferUtils.getByteBufferKey(id));
+                } else {
+                    dao.remove(ByteBufferUtils.getByteBufferKey(id), Long.parseLong(timestamp));
+                }
+                return new ResponseBuilder(Response.ACCEPTED);
+            } catch (IOException e) {
+                logger.error("DELETE failed! Cannot get the element {}.\n Error: {}",
+                        id, e.getMessage(), e);
+                throw new RuntimeException(e);
+            }
+        }, executor);
     }
 }

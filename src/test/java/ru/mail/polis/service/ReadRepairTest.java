@@ -35,7 +35,7 @@ class ReadRepairTest extends ClusterTestBase {
     }
 
     void waitForRepair() throws Exception {
-        Thread.sleep(1000);
+        Thread.sleep(2000);
     }
 
     @Test
