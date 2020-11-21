@@ -1,6 +1,7 @@
 package ru.mail.polis.dao.re1nex;
 
 import org.jetbrains.annotations.NotNull;
+import ru.mail.polis.service.re1nex.ByteBufferUtils;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
@@ -66,7 +67,7 @@ public class ConsistentHashingTopology implements Topology<String> {
     @NotNull
     @Override
     public String primaryFor(@NotNull final ByteBuffer key) throws NoSuchAlgorithmException {
-        final byte[] keyByte = new byte[key.remaining()];
+        final byte[] keyByte = ByteBufferUtils.byteBufferToByte(key.duplicate());
         long hash = calculateHash(keyByte);
         final SortedMap<Long, String> tailMap = map.tailMap(hash);
         hash = tailMap.isEmpty() ? map.firstKey() : tailMap.firstKey();
