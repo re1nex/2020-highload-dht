@@ -19,16 +19,20 @@ final class ChunkCreator {
     static byte[] createChunk(@NotNull final Record record) {
         final byte[] key = ByteBufferUtils.byteBufferToByte(record.getKey());
         final byte[] value = ByteBufferUtils.byteBufferToByte(record.getValue());
-        final byte[] data = new byte[key.length + LF.length + value.length];
-        System.arraycopy(key, 0, data, 0, key.length);
-        System.arraycopy(LF, 0, data, key.length, LF.length);
-        System.arraycopy(value, 0, data, key.length + LF.length, value.length);
-        final byte[] dataLen = Integer.toHexString(data.length).getBytes(StandardCharsets.UTF_8);
-        final byte[] answer = new byte[dataLen.length + CRLF.length + data.length + CRLF.length];
-        System.arraycopy(dataLen, 0, answer, 0, dataLen.length);
-        System.arraycopy(CRLF, 0, answer, dataLen.length, CRLF.length);
-        System.arraycopy(data, 0, answer, dataLen.length + CRLF.length, data.length);
-        System.arraycopy(CRLF, 0, answer, dataLen.length + CRLF.length + data.length, CRLF.length);
+        final int dataLength = key.length + LF.length + value.length;
+        final byte[] dataLen = Integer.toHexString(dataLength).getBytes(StandardCharsets.UTF_8);
+        final byte[] answer = new byte[dataLen.length + CRLF.length + dataLength + CRLF.length];
+        int cur = dataLen.length;
+        System.arraycopy(dataLen, 0, answer, 0, cur);
+        System.arraycopy(CRLF, 0, answer, cur, CRLF.length);
+        cur += CRLF.length;
+        System.arraycopy(key, 0, answer, cur, key.length);
+        cur += key.length;
+        System.arraycopy(LF, 0, answer, cur, LF.length);
+        cur += LF.length;
+        System.arraycopy(value, 0, answer, cur, value.length);
+        cur += value.length;
+        System.arraycopy(CRLF, 0, answer, cur, CRLF.length);
         return answer;
     }
 }
