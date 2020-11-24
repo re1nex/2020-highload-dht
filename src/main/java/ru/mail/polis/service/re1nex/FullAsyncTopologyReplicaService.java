@@ -64,25 +64,26 @@ public class FullAsyncTopologyReplicaService extends BaseService {
             @Nullable @Param(value = "end") final String end,
             @NotNull final HttpSession session
     ) {
+
+        if (start.isEmpty()) {
+            ApiUtils.sendErrorResponse(session, Response.BAD_REQUEST, logger);
+            return;
+        }
+        final ByteBuffer startByteBuffer = ByteBufferUtils.getByteBufferKey(start);
+        final ByteBuffer endByteBuffer;
+        if (end == null || end.isEmpty()) {
+            endByteBuffer = null;
+        } else {
+            endByteBuffer = ByteBufferUtils.getByteBufferKey(end);
+        }
         executeTask(() -> {
-            if (start.isEmpty()) {
-                ApiUtils.sendErrorResponse(session, Response.BAD_REQUEST, logger);
-                return;
-            }
-            final ByteBuffer startByteBuffer = ByteBufferUtils.getByteBufferKey(start);
-            final ByteBuffer endByteBuffer;
-            if (end == null || end.isEmpty()) {
-                endByteBuffer = null;
-            } else {
-                endByteBuffer = ByteBufferUtils.getByteBufferKey(end);
-            }
             try {
+
                 ((RangeStream) session).setIterator(dao.range(startByteBuffer, endByteBuffer));
             } catch (IOException e) {
                 logger.error("Cannot handle range request: " + e.getMessage(), e);
                 ApiUtils.sendErrorResponse(session, Response.INTERNAL_ERROR, logger);
             }
-
         }, session);
     }
 }

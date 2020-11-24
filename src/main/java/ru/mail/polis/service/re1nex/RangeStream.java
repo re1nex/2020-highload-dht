@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.util.Iterator;
 
 final class RangeStream extends HttpSession {
+    @NotNull
+    private static final String CHUNKED_HEADER = "Transfer-Encoding: chunked";
     @Nullable
     private Iterator<Record> iterator;
 
@@ -24,7 +26,7 @@ final class RangeStream extends HttpSession {
     void setIterator(@NotNull final Iterator<Record> iterator) throws IOException {
         this.iterator = iterator;
         final Response response = new Response(Response.OK);
-        response.addHeader("Transfer-Encoding: chunked");
+        response.addHeader(CHUNKED_HEADER);
         writeResponse(response, false);
         next();
     }
