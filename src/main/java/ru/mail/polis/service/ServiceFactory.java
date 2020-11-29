@@ -65,7 +65,8 @@ public final class ServiceFactory {
         } catch (NoSuchAlgorithmException e) {
             throw new IOException(e);
         }
-        return new FullAsyncTopologyReplicaService(port,
+        return new FullAsyncTopologyReplicaService(
+                port,
                 dao,
                 Runtime.getRuntime().availableProcessors(),
                 QUEUE_SIZE,

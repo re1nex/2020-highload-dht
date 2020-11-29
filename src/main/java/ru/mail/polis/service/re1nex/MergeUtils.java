@@ -30,7 +30,6 @@ final class MergeUtils {
                                       @NotNull final String id,
                                       @NotNull final ExecutorService executorService,
                                       final int ack) {
-        int numResponses = 0;
         int numNotFoundResponses = 0;
         long lastGeneration = 0;
         ResponseBuilder last = new ResponseBuilder(Response.NOT_FOUND);
@@ -44,12 +43,12 @@ final class MergeUtils {
                     last = response;
                 }
             }
-            numResponses++;
         }
-        if (numNotFoundResponses != numResponses) {
+        if (numNotFoundResponses != responses.size()) {
             repair(last, responses, client, executorService, id);
         }
-        return getResponseFromValues(numResponses,
+        return getResponseFromValues(
+                responses.size(),
                 ack,
                 numNotFoundResponses,
                 last);

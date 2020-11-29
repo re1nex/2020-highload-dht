@@ -34,10 +34,6 @@ class ReadRepairTest extends ClusterTestBase {
         return 3;
     }
 
-    void waitForRepair() throws Exception {
-        Thread.sleep(2000);
-    }
-
     @Test
     void putTest() {
         assertTimeoutPreemptively(TIMEOUT, () -> {
@@ -66,9 +62,6 @@ class ReadRepairTest extends ClusterTestBase {
                         stop(i);
                     }
                 }
-
-                // need to wait while repair
-                waitForRepair();
 
                 checkResponse(200, value, get(node, key, 1, 3));
 
@@ -113,10 +106,51 @@ class ReadRepairTest extends ClusterTestBase {
                     }
                 }
 
-                // need to wait while repair
-                waitForRepair();
-
                 assertEquals(404, get(node, key, 1, 3).getStatus());
+
+                // Help implementors with ms precision for conflict resolution
+                waitForVersionAdvancement();
+            }
+        });
+    }
+
+    @Test
+    void updateTest() {
+        assertTimeoutPreemptively(TIMEOUT, () -> {
+            final String key = randomId();
+
+            for (int node = 0; node < getClusterSize(); node++) {
+                // Reinitialize cluster
+                restartAllNodes();
+
+                // Insert value
+                final byte[] value = randomValue();
+                assertEquals(201, upsert((node + 1) % getClusterSize(), key, value, 3, 3).getStatus());
+
+                // Check
+                checkResponse(200, value, get(node, key, 3, 3));
+
+                // Stop node
+                stop(node);
+
+                // update value
+                final byte[] value2 = randomValue();
+                assertEquals(201, upsert((node + 1) % getClusterSize(), key, value2, 2, 3).getStatus());
+
+                // Start node
+                createAndStart(node);
+
+                // Check
+                checkResponse(200, value2, get(node, key, 2, 3));
+
+                //stop all that wasn't missed
+                for (int i = 0; i < getClusterSize(); i++) {
+                    if (i != node) {
+                        stop(i);
+                    }
+                }
+
+                checkResponse(200, value2, get(node, key, 1, 3));
 
                 // Help implementors with ms precision for conflict resolution
                 waitForVersionAdvancement();
