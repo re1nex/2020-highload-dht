@@ -78,7 +78,8 @@ final class MergeUtils {
                           @NotNull final ResponseBuilder response,
                           @NotNull final HttpClient client,
                           @NotNull final String id) {
-        client.sendAsync(ApiUtils.repairRequestBuilder(response.getNode(),
+        client.sendAsync(ApiUtils.repairRequestBuilder(
+                response.getNode(),
                 id,
                 lastResponse.getGeneration())
                 .PUT(HttpRequest.BodyPublishers.ofByteArray(lastResponse.getValue()))
@@ -96,7 +97,8 @@ final class MergeUtils {
                              @NotNull final ResponseBuilder response,
                              @NotNull final HttpClient client,
                              @NotNull final String id) {
-        client.sendAsync(ApiUtils.repairRequestBuilder(response.getNode(),
+        client.sendAsync(ApiUtils.repairRequestBuilder(
+                response.getNode(),
                 id,
                 lastResponse.getGeneration())
                 .DELETE()
