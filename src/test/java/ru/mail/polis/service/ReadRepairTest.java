@@ -150,7 +150,7 @@ class ReadRepairTest extends ClusterTestBase {
                     }
                 }
 
-                
+
                 checkResponse(200, value2, get(node, key, 1, 3));
 
                 // Help implementors with ms precision for conflict resolution

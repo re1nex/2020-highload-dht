@@ -87,10 +87,10 @@ class AsyncApiControllerImpl {
                         new GetBodyHandler());
                 mergeAndSendResponse(session,
                         responses,
-                        responseBuilders -> MergeUtils.mergeGetAndRepair(responseBuilders,
+                        responseBuilders -> MergeUtils.mergeGetAndRepair(
+                                responseBuilders,
                                 client,
                                 id,
-                                executor,
                                 ack),
                         ack);
                 break;

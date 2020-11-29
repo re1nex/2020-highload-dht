@@ -28,7 +28,6 @@ final class MergeUtils {
     static Response mergeGetAndRepair(@NotNull final Collection<ResponseBuilder> responses,
                                       @NotNull final HttpClient client,
                                       @NotNull final String id,
-                                      @NotNull final ExecutorService executorService,
                                       final int ack) {
         int numNotFoundResponses = 0;
         long lastGeneration = 0;
@@ -45,7 +44,7 @@ final class MergeUtils {
             }
         }
         if (numNotFoundResponses != responses.size()) {
-            repair(last, responses, client, executorService, id);
+            repair(last, responses, client, id);
         }
         return getResponseFromValues(
                 responses.size(),
@@ -57,12 +56,11 @@ final class MergeUtils {
     static void repair(@NonNull final ResponseBuilder lastResponse,
                        @NotNull final Collection<ResponseBuilder> responses,
                        @NotNull final HttpClient client,
-                       @NotNull final ExecutorService executorService,
                        @NotNull final String id) {
         if (lastResponse.isTombstone()) {
             for (final ResponseBuilder response : responses) {
                 if (response.getStatusCode() != 404 && !response.isTombstone()) {
-                    repairDelete(lastResponse, response, client, executorService, id);
+                    repairDelete(lastResponse, response, client, id);
                 }
             }
         } else {
@@ -70,7 +68,7 @@ final class MergeUtils {
                 if (response.getStatusCode() == 404
                         || response.isTombstone()
                         || !Arrays.equals(response.getValue(), lastResponse.getValue())) {
-                    repairPut(lastResponse, response, client, executorService, id);
+                    repairPut(lastResponse, response, client, id);
                 }
             }
         }
@@ -79,38 +77,36 @@ final class MergeUtils {
     static void repairPut(@NonNull final ResponseBuilder lastResponse,
                           @NotNull final ResponseBuilder response,
                           @NotNull final HttpClient client,
-                          @NotNull final ExecutorService executorService,
                           @NotNull final String id) {
         client.sendAsync(ApiUtils.repairRequestBuilder(response.getNode(),
                 id,
                 lastResponse.getGeneration())
                 .PUT(HttpRequest.BodyPublishers.ofByteArray(lastResponse.getValue()))
                 .build(), HttpResponse.BodyHandlers.ofString())
-                .thenApplyAsync(HttpResponse::body, executorService)
-                .whenCompleteAsync((res, err) -> {
+                .thenApply(HttpResponse::body)
+                .whenComplete((res, err) -> {
                     if (err != null) {
                         logger.error("Cannot repair replica: " + response.getNode(), err);
                     }
-                }, executorService)
+                })
                 .isCancelled();
     }
 
     static void repairDelete(@NonNull final ResponseBuilder lastResponse,
                              @NotNull final ResponseBuilder response,
                              @NotNull final HttpClient client,
-                             @NotNull final ExecutorService executorService,
                              @NotNull final String id) {
         client.sendAsync(ApiUtils.repairRequestBuilder(response.getNode(),
                 id,
                 lastResponse.getGeneration())
                 .DELETE()
                 .build(), HttpResponse.BodyHandlers.ofString())
-                .thenApplyAsync(HttpResponse::body, executorService)
-                .whenCompleteAsync((res, err) -> {
+                .thenApply(HttpResponse::body)
+                .whenComplete((res, err) -> {
                     if (err != null) {
                         logger.error("Cannot repair replica: " + response.getNode(), err);
                     }
-                }, executorService)
+                })
                 .isCancelled();
     }
 
