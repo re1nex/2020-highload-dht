@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -57,59 +58,49 @@ final class MergeUtils {
                        @NotNull final Collection<ResponseBuilder> responses,
                        @NotNull final HttpClient client,
                        @NotNull final String id) {
-        if (lastResponse.isTombstone()) {
-            for (final ResponseBuilder response : responses) {
-                if (response.getStatusCode() != 404 && !response.isTombstone()) {
-                    repairDelete(lastResponse, response, client, id);
+        try {
+            if (lastResponse.isTombstone()) {
+                for (final ResponseBuilder response : responses) {
+                    if (response.getStatusCode() != 404 && !response.isTombstone()) {
+                        repairDelete(lastResponse, response, client, id);
+                    }
+                }
+            } else {
+                for (final ResponseBuilder response : responses) {
+                    if (response.getStatusCode() == 404
+                            || response.isTombstone()
+                            || !Arrays.equals(response.getValue(), lastResponse.getValue())) {
+                        repairPut(lastResponse, response, client, id);
+                    }
                 }
             }
-        } else {
-            for (final ResponseBuilder response : responses) {
-                if (response.getStatusCode() == 404
-                        || response.isTombstone()
-                        || !Arrays.equals(response.getValue(), lastResponse.getValue())) {
-                    repairPut(lastResponse, response, client, id);
-                }
-            }
+        } catch (IOException | InterruptedException e) {
+            logger.error("Cannot repair replica! ", e);
         }
     }
 
     static void repairPut(@NonNull final ResponseBuilder lastResponse,
                           @NotNull final ResponseBuilder response,
                           @NotNull final HttpClient client,
-                          @NotNull final String id) {
-        client.sendAsync(ApiUtils.repairRequestBuilder(
+                          @NotNull final String id) throws IOException, InterruptedException {
+        client.send(ApiUtils.repairRequestBuilder(
                 response.getNode(),
                 id,
                 lastResponse.getGeneration())
                 .PUT(HttpRequest.BodyPublishers.ofByteArray(lastResponse.getValue()))
-                .build(), HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .whenComplete((res, err) -> {
-                    if (err != null) {
-                        logger.error("Cannot repair replica: " + response.getNode(), err);
-                    }
-                })
-                .isCancelled();
+                .build(), HttpResponse.BodyHandlers.ofString());
     }
 
     static void repairDelete(@NonNull final ResponseBuilder lastResponse,
                              @NotNull final ResponseBuilder response,
                              @NotNull final HttpClient client,
-                             @NotNull final String id) {
-        client.sendAsync(ApiUtils.repairRequestBuilder(
+                             @NotNull final String id) throws IOException, InterruptedException {
+        client.send(ApiUtils.repairRequestBuilder(
                 response.getNode(),
                 id,
                 lastResponse.getGeneration())
                 .DELETE()
-                .build(), HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .whenComplete((res, err) -> {
-                    if (err != null) {
-                        logger.error("Cannot repair replica: " + response.getNode(), err);
-                    }
-                })
-                .isCancelled();
+                .build(), HttpResponse.BodyHandlers.ofString());
     }
 
     static Response getResponseFromValues(final int numResponses,
