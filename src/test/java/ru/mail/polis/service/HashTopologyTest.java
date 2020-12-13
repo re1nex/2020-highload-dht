@@ -22,7 +22,7 @@ public final class HashTopologyTest extends ClusterTestBase {
     int getClusterSize() {
         return 3;
     }
-
+    
     @Test
     void equalsTest() throws NoSuchAlgorithmException {
         final String node = nodes[0];
