@@ -92,7 +92,7 @@ public class ConsistentHashingTopology implements Topology<String> {
     @Override
     public Set<String> severalNodesForKey(@NotNull final ByteBuffer key,
                                           final int numNodes) throws NoSuchAlgorithmException {
-        final byte[] keyByte = new byte[key.remaining()];
+        final byte[] keyByte = ByteBufferUtils.byteBufferToByte(key.duplicate());
         final long hash = calculateHash(keyByte);
         final SortedMap<Long, String> tailMap = map.tailMap(hash);
         final SortedSet<String> nodes = new TreeSet<>();
