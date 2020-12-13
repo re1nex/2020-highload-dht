@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class HashTopologyTest extends ClusterTestBase {
     private static final int NUM_ELEM = 10000000;
-    private static final float DELTA = 0.5f;
+    private static final float DELTA = 0.6f;
 
     @Override
     int getClusterSize() {
